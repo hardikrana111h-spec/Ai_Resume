@@ -1,46 +1,29 @@
-import { Outlet, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Outlet } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import RouteSkeleton from "../components/RouteSkeleton";
-import { useNetwork } from "../context/NetworkContext";
+import SiteNotice from "../components/SiteNotice";
+import UpgradeBanner from "../components/UpgradeBanner";
+import { SITE_UPGRADE_MODE } from "../config/siteConfig";
 
 export default function MainLayout() {
-  const location = useLocation();
-  const { isOnline } = useNetwork();
-
-  const [showSkeleton, setShowSkeleton] = useState(false);
-
-  useEffect(() => {
-    if (!isOnline) {
-      setShowSkeleton(true);
-      return;
-    }
-
-    setShowSkeleton(false);
-  }, [isOnline, location.pathname]);
-
   return (
-    <div className="app-shell" style={{ width: "100%", overflowX: "hidden" }}>
+    <div className="app-shell">
+      {SITE_UPGRADE_MODE && <UpgradeBanner />}
+
       <div className="bg-orb orb-1" />
       <div className="bg-orb orb-2" />
       <div className="bg-orb orb-3" />
 
-      <Navbar />
+      <div className="page-wrap">
+        <Navbar />
 
-      <main style={{ width: "100%", boxSizing: "border-box" }}>
-        <div
-          style={{
-            width: "min(1600px, calc(103% - 48px))",
-            margin: "30px auto",
-            boxSizing: "border-box",
-          }}
-        >
-          {showSkeleton ? <RouteSkeleton /> : <Outlet key={location.pathname} />}
-        </div>
-      </main>
+        <main className="page-motion-wrap">
+          <Outlet />
+        </main>
 
-      <Footer />
+        <Footer />
+        <SiteNotice />
+      </div>
     </div>
   );
 }

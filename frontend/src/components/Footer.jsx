@@ -1,36 +1,44 @@
+import { Link } from "react-router-dom";
+
 export default function Footer() {
   return (
     <footer className="site-footer glass">
       <div className="footer-grid">
         <div className="footer-brand">
           <strong>AI Resume Analyzer</strong>
-          <p>
-            Analyze resumes, improve ATS score, and build modern resumes with a clean premium experience.
+          <p className="footer-text">
+            Build better resumes, analyze ATS compatibility, and improve your
+            career profile with a professional AI-powered SaaS platform.
           </p>
         </div>
 
         <div className="footer-links">
-          <strong>Quick Links</strong>
-          <a href="/analyze">Analyze</a>
-          <a href="/resume-builder">Resume Builder</a>
-          <a href="/history">Reports</a>
+          <strong>Product</strong>
+          <Link to="/analyze">Resume Analyzer</Link>
+          <Link to="/resume-builder">Resume Builder</Link>
+          <Link to="/history">Reports</Link>
+          <Link to="/pricing">Pricing</Link>
         </div>
 
         <div className="footer-links">
-          <strong>Features</strong>
-          <a href="/">ATS Analysis</a>
-          <a href="/">Google Login</a>
-          <a href="/">Resume Templates</a>
+          <strong>Company</strong>
+          <Link to="/about">About Us</Link>
+          <Link to="/contact">Contact Us</Link>
+          <Link to="/help">Help Center</Link>
+          <Link to="/login">Login</Link>
         </div>
 
         <div className="footer-links">
-          <strong>Contact</strong>
-          <span>Built for students, developers, and job seekers.</span>
+          <strong>Legal</strong>
+          <Link to="/privacy">Privacy Policy</Link>
+          <Link to="/terms">Terms &amp; Conditions</Link>
+          <span>Made for students, professionals, and job seekers.</span>
         </div>
       </div>
 
-      <div className="footer-copy">
-        © 2026 AI Resume Analyzer • Built for smart resume growth
+      <div className="footer-bottom footer-copy">
+        <span>© 2026 AI Resume Analyzer</span>
+        <span>Professional SaaS for resume growth</span>
       </div>
     </footer>
   );

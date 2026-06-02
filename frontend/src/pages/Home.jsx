@@ -6,7 +6,11 @@ const sections = [
   { id: "features", label: "Features" },
   { id: "workflow", label: "Workflow" },
   { id: "templates", label: "Templates" },
+  { id: "about", label: "About" },
+  { id: "pricing", label: "Pricing" },
+  { id: "help", label: "Help" },
   { id: "testimonials", label: "Reviews" },
+  { id: "contact", label: "Contact" },
   { id: "cta", label: "Start" },
 ];
 
@@ -59,13 +63,52 @@ const steps = [
   },
 ];
 
-const templates = [
-  "Modern",
-  "Minimal",
-  "Creative",
-  "Corporate",
-  "Developer",
-  "ATS Clean",
+const templates = ["Modern", "Minimal", "Creative", "Corporate", "Developer", "ATS Clean"];
+
+const pricingPlans = [
+  {
+    name: "Free",
+    price: "₹0",
+    tag: "For testing the platform",
+    items: ["Basic resume analysis", "Limited exports", "Core templates", "Private history"],
+    cta: "Start Free",
+    ctaTo: "/analyze",
+  },
+  {
+    name: "Pro",
+    price: "₹199/mo",
+    tag: "Best for active job seekers",
+    items: ["Full AI analysis", "Resume builder", "More templates", "Priority processing"],
+    cta: "Go Pro",
+    ctaTo: "/resume-builder",
+  },
+  {
+    name: "Premium",
+    price: "₹499/mo",
+    tag: "For power users and support",
+    items: ["Advanced AI suggestions", "Cover letter flow", "Unlimited exports", "Priority support"],
+    cta: "Choose Premium",
+    ctaTo: "/contact",
+  },
+];
+
+const faqs = [
+  {
+    q: "Is this platform under active development?",
+    a: "Yes. The product is live and functional, while we continue polishing mobile UI, workflow speed, and SaaS pages.",
+  },
+  {
+    q: "What file formats are supported?",
+    a: "PDF and DOCX resume uploads are supported for analysis and report generation.",
+  },
+  {
+    q: "Are reports private?",
+    a: "Yes. Each user can only access their own history and reports after login.",
+  },
+  {
+    q: "What happens if internet is slow?",
+    a: "The app should show a network status banner and continue gracefully with loading feedback.",
+  },
 ];
 
 const testimonials = [
@@ -83,8 +126,27 @@ const testimonials = [
   },
 ];
 
+const contactCards = [
+  {
+    title: "Email Support",
+    desc: "support@airesumeanalyzer.com",
+  },
+  {
+    title: "Response Time",
+    desc: "Usually within 24 hours",
+  },
+  {
+    title: "Platform Status",
+    desc: "Live beta with active improvements",
+  },
+];
+
 export default function Home() {
   const [counts, setCounts] = useState(stats.map(() => 0));
+  const [showNotice, setShowNotice] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("ai_resume_notice_dismissed") !== "1";
+  });
 
   useEffect(() => {
     let rafId;
@@ -95,9 +157,7 @@ export default function Home() {
       const progress = Math.min((now - start) / duration, 1);
 
       setCounts(
-        stats.map((item) =>
-          item.text ? 0 : Math.round(item.target * progress)
-        )
+        stats.map((item) => (item.text ? 0 : Math.round(item.target * progress)))
       );
 
       if (progress < 1) {
@@ -110,8 +170,28 @@ export default function Home() {
     return () => cancelAnimationFrame(rafId);
   }, []);
 
+  const dismissNotice = () => {
+    setShowNotice(false);
+    localStorage.setItem("ai_resume_notice_dismissed", "1");
+  };
+
   return (
     <div className="home-page">
+      {showNotice && (
+        <div className="info-box" style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <div>
+            <strong>🚧 Platform upgrade is active.</strong>{" "}
+            <span>
+              AI Resume Analyzer is being upgraded into a professional SaaS
+              platform. Some sections may change during improvement.
+            </span>
+          </div>
+          <button type="button" className="secondary-btn" onClick={dismissNotice}>
+            Continue Anyway
+          </button>
+        </div>
+      )}
+
       <div className="home-sections-nav glass">
         {sections.map((item) => (
           <a key={item.id} href={`#${item.id}`} className="home-section-link">
@@ -132,11 +212,11 @@ export default function Home() {
           </p>
 
           <div className="hero-actions">
-            <Link to="/analyze">
-              <button className="primary-btn">Start Analysis</button>
+            <Link to="/analyze" className="primary-btn">
+              Start Analysis
             </Link>
-            <Link to="/resume-builder">
-              <button className="secondary-btn">Open Resume Builder</button>
+            <Link to="/resume-builder" className="secondary-btn">
+              Open Resume Builder
             </Link>
           </div>
 
@@ -194,9 +274,7 @@ export default function Home() {
       <section id="features" className="stats-section home-section">
         {stats.map((item, index) => (
           <div className="stat-card glass" key={item.label}>
-            <strong>
-              {item.text ? item.text : `${counts[index]}${item.suffix}`}
-            </strong>
+            <strong>{item.text ? item.text : `${counts[index]}${item.suffix}`}</strong>
             <span>{item.label}</span>
           </div>
         ))}
@@ -241,61 +319,63 @@ export default function Home() {
               </span>
             ))}
           </div>
+
           <div className="home-template-showcase">
-  <div className="home-template-card">
-    <div className="template-header">
-      <div className="template-name">Modern</div>
-      <div className="template-role">Frontend Developer</div>
-    </div>
+            <div className="home-template-card">
+              <div className="template-header">
+                <div className="template-name">Modern</div>
+                <div className="template-role">Frontend Developer</div>
+              </div>
 
-    <div className="template-line w90"></div>
-    <div className="template-line w75"></div>
+              <div className="template-line w90" />
+              <div className="template-line w75" />
 
-    <div className="template-section">
-      <div className="template-title"></div>
-      <div className="template-line w95"></div>
-      <div className="template-line w80"></div>
-    </div>
+              <div className="template-section">
+                <div className="template-title" />
+                <div className="template-line w95" />
+                <div className="template-line w80" />
+              </div>
 
-    <div className="template-footer">Modern</div>
-  </div>
+              <div className="template-footer">Modern</div>
+            </div>
 
-  <div className="home-template-card">
-    <div className="template-header">
-      <div className="template-name">Corporate</div>
-      <div className="template-role">Software Engineer</div>
-    </div>
+            <div className="home-template-card">
+              <div className="template-header">
+                <div className="template-name">Corporate</div>
+                <div className="template-role">Software Engineer</div>
+              </div>
 
-    <div className="template-line w90"></div>
-    <div className="template-line w70"></div>
+              <div className="template-line w90" />
+              <div className="template-line w70" />
 
-    <div className="template-section">
-      <div className="template-title"></div>
-      <div className="template-line w92"></div>
-      <div className="template-line w82"></div>
-    </div>
+              <div className="template-section">
+                <div className="template-title" />
+                <div className="template-line w92" />
+                <div className="template-line w82" />
+              </div>
 
-    <div className="template-footer">Corporate</div>
-  </div>
+              <div className="template-footer">Corporate</div>
+            </div>
 
-  <div className="home-template-card">
-    <div className="template-header">
-      <div className="template-name">ATS Clean</div>
-      <div className="template-role">React Developer</div>
-    </div>
+            <div className="home-template-card">
+              <div className="template-header">
+                <div className="template-name">ATS Clean</div>
+                <div className="template-role">React Developer</div>
+              </div>
 
-    <div className="template-line w88"></div>
-    <div className="template-line w72"></div>
+              <div className="template-line w88" />
+              <div className="template-line w72" />
 
-    <div className="template-section">
-      <div className="template-title"></div>
-      <div className="template-line w94"></div>
-      <div className="template-line w78"></div>
-    </div>
+              <div className="template-section">
+                <div className="template-title" />
+                <div className="template-line w94" />
+                <div className="template-line w78" />
+              </div>
 
-    <div className="template-footer">ATS</div>
-  </div>
-</div>
+              <div className="template-footer">ATS</div>
+            </div>
+          </div>
+
           <p className="section-note">
             Use different layouts for corporate, creative, ATS clean, and
             developer-style resumes.
@@ -315,6 +395,146 @@ export default function Home() {
         </div>
       </section>
 
+      <section id="about" className="content-card glass home-section">
+        <h2>About AI Resume Analyzer</h2>
+        <p className="section-note">
+          We are building a real-world SaaS platform that helps candidates analyze
+          resumes, improve job fit, and create professional documents in one
+          place.
+        </p>
+
+        <div className="step-list">
+          <div className="step-item">
+            <div className="step-no">A1</div>
+            <div>
+              <h3>Built for real job seekers</h3>
+              <p>Designed for students, freshers, developers, and professionals.</p>
+            </div>
+          </div>
+
+          <div className="step-item">
+            <div className="step-no">A2</div>
+            <div>
+              <h3>Private by design</h3>
+              <p>Reports stay inside the logged-in user workspace.</p>
+            </div>
+          </div>
+
+          <div className="step-item">
+            <div className="step-no">A3</div>
+            <div>
+              <h3>Always improving</h3>
+              <p>The platform is live and under active enhancement for SaaS quality.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pricing" className="content-card glass home-section">
+        <h2>Pricing</h2>
+        <p className="section-note">
+          Simple plans for testing, active job hunting, and premium support.
+        </p>
+
+        <div className="feature-grid">
+          {pricingPlans.map((plan) => (
+            <div className="feature-item" key={plan.name}>
+              <h3>{plan.name}</h3>
+              <p style={{ fontSize: 28, fontWeight: 900, color: "#0f172a", marginTop: 10 }}>
+                {plan.price}
+              </p>
+              <p style={{ marginTop: 6, color: "#64748b" }}>{plan.tag}</p>
+
+              <ul style={{ margin: "14px 0 0", paddingLeft: 18, lineHeight: 1.8 }}>
+                {plan.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+
+              <div style={{ marginTop: 16 }}>
+                <Link to={plan.ctaTo} className="primary-btn">
+                  {plan.cta}
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="help" className="content-card glass home-section">
+        <h2>Help Center</h2>
+        <p className="section-note">
+          Quick answers for common usage and platform questions.
+        </p>
+
+        <div className="step-list">
+          {faqs.map((item, index) => (
+            <div className="step-item" key={item.q}>
+              <div className="step-no">{String(index + 1).padStart(2, "0")}</div>
+              <div>
+                <h3>{item.q}</h3>
+                <p>{item.a}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="contact" className="content-grid home-section">
+        <div className="content-card glass">
+          <h2>Contact</h2>
+          <div className="feature-grid">
+            {contactCards.map((item) => (
+              <div className="feature-item" key={item.title}>
+                <h3>{item.title}</h3>
+                <p>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="section-note" style={{ marginTop: 18 }}>
+            Need support, feedback, or a feature request? Reach out and we will
+            improve the platform with you.
+          </p>
+
+          <div className="hero-actions">
+            <a href="mailto:support@airesumeanalyzer.com" className="primary-btn">
+              Email Support
+            </a>
+            <Link to="/login" className="secondary-btn">
+              Login
+            </Link>
+          </div>
+        </div>
+
+        <div className="content-card glass">
+          <h2>Company status</h2>
+          <div className="step-list">
+            <div className="step-item">
+              <div className="step-no">LV</div>
+              <div>
+                <h3>Live beta</h3>
+                <p>The app is running and actively getting better.</p>
+              </div>
+            </div>
+            <div className="step-item">
+              <div className="step-no">UI</div>
+              <div>
+                <h3>UI refinement</h3>
+                <p>Mobile responsiveness and company-level pages are next.</p>
+              </div>
+            </div>
+            <div className="step-item">
+              <div className="step-no">AI</div>
+              <div>
+                <h3>AI engine</h3>
+                <p>Resume analysis, suggestions, and workflow automation are already in place.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="cta" className="cta-section glass home-section">
         <div>
           <h2>Ready to improve your resume?</h2>
@@ -324,11 +544,11 @@ export default function Home() {
           </p>
         </div>
         <div className="cta-actions">
-          <Link to="/analyze">
-            <button className="primary-btn">Analyze Resume</button>
+          <Link to="/analyze" className="primary-btn">
+            Analyze Resume
           </Link>
-          <Link to="/resume-builder">
-            <button className="secondary-btn">Build Resume</button>
+          <Link to="/resume-builder" className="secondary-btn">
+            Build Resume
           </Link>
         </div>
       </section>

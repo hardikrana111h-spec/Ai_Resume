@@ -6,7 +6,7 @@ import Home from "./pages/Home";
 import Analyzer from "./pages/Analyzer";
 import History from "./pages/History";
 import ReportDetails from "./pages/ReportDetails";
-import ResumeBuilder from "./pages/ResumeBuilder";
+// import ResumeBuilder from "./pages/ResumeBuilder";
 
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -83,7 +83,7 @@ export default function App() {
               </UpgradeRoute>
             }
           />
-          <Route
+          {/* <Route
             path="/resume-builder"
             element={
               <UpgradeRoute block={true}>
@@ -91,6 +91,14 @@ export default function App() {
               </UpgradeRoute>
             }
           />
+          {/* <Route
+            path="/resume-builder"
+            element={
+              <UpgradeRoute block={true}>
+                <ResumeBuilder />
+              </UpgradeRoute>
+            }
+          /> */}
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

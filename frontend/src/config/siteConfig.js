@@ -1,1 +1,1 @@
-export const SITE_UPGRADE_MODE = true;
+export const SITE_UPGRADE_MODE = false; // Set to true to enable upgrade mode, which shows a maintenance page.

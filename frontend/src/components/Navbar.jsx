@@ -47,7 +47,7 @@ export default function Navbar() {
         <div className="brand-logo">AI</div>
         <div className="brand-copy">
           <strong>AI Resume Analyzer</strong>
-          <span>AI SaaS • ATS Score • Resume Builder</span>
+          <span>AI SaaS • ATS Score </span>
         </div>
       </button>
 

@@ -83,7 +83,7 @@ export default function App() {
               </UpgradeRoute>
             }
           />
-          {/* <Route
+          <Route
             path="/resume-builder"
             element={
               <UpgradeRoute block={true}>
@@ -91,14 +91,6 @@ export default function App() {
               </UpgradeRoute>
             }
           />
-          {/* <Route
-            path="/resume-builder"
-            element={
-              <UpgradeRoute block={true}>
-                <ResumeBuilder />
-              </UpgradeRoute>
-            }
-          /> */}
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

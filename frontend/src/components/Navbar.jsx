@@ -94,9 +94,9 @@ export default function Navbar() {
             <NavLink to="/analyze" className={navClass}>
               Analyze
             </NavLink>
-            <NavLink to="/resume-builder" className={navClass}>
+            {/* <NavLink to="/resume-builder" className={navClass}>
               Resume Builder
-            </NavLink>
+            </NavLink> */}
             <NavLink to="/history" className={navClass}>
               Reports
             </NavLink>

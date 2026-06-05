@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const [moreOpen, setMoreOpen] = useState(false);
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -73,7 +74,7 @@ export default function Navbar() {
         className={`nav-links ${menuOpen ? "open" : ""}`}
         onClick={closeMenu}
       >
-        <NavLink to="/" end className={navClass}>
+        {/* <NavLink to="/" end className={navClass}>
           Home
         </NavLink>
         <NavLink to="/about" className={navClass}>
@@ -87,7 +88,7 @@ export default function Navbar() {
         </NavLink>
         <NavLink to="/help" className={navClass}>
           Help
-        </NavLink>
+        </NavLink> */}
 
         {user && (
           <>
@@ -121,6 +122,35 @@ export default function Navbar() {
             >
               Logout
             </button>
+            <div className="more-menu">
+  <button
+    type="button"
+    className="more-btn"
+    onClick={() => setMoreOpen(!moreOpen)}
+  >
+    ⋮
+  </button>
+
+  {moreOpen && (
+    <div className="more-dropdown">
+      <NavLink to="/" onClick={() => setMoreOpen(false)}>
+        Home
+      </NavLink>
+      <NavLink to="/about" onClick={() => setMoreOpen(false)}>
+        About
+      </NavLink>
+      <NavLink to="/pricing" onClick={() => setMoreOpen(false)}>
+        Pricing
+      </NavLink>
+      <NavLink to="/contact" onClick={() => setMoreOpen(false)}>
+        Contact
+      </NavLink>
+      <NavLink to="/help" onClick={() => setMoreOpen(false)}>
+        Help
+      </NavLink>
+    </div>
+  )}
+</div>
           </>
         ) : (
           <button

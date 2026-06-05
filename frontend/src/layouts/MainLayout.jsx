@@ -8,7 +8,6 @@ import { SITE_UPGRADE_MODE } from "../config/siteConfig";
 export default function MainLayout() {
   return (
     <div className="app-shell">
-      {SITE_UPGRADE_MODE && <UpgradeBanner />}
 
       <div className="bg-orb orb-1" />
       <div className="bg-orb orb-2" />

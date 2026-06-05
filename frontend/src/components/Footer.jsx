@@ -7,15 +7,14 @@ export default function Footer() {
         <div className="footer-brand">
           <strong>AI Resume Analyzer</strong>
           <p className="footer-text">
-            Build better resumes, analyze ATS compatibility, and improve your
-            career profile with a professional AI-powered SaaS platform.
+            Analyze ATS compatibility and improve your career profile with professional AI-powered resume insights.
           </p>
         </div>
 
         <div className="footer-links">
           <strong>Product</strong>
           <Link to="/analyze">Resume Analyzer</Link>
-          <Link to="/resume-builder">Resume Builder</Link>
+          {/* <Link to="/resume-builder">Resume Builder</Link> */}
           <Link to="/history">Reports</Link>
           <Link to="/pricing">Pricing</Link>
         </div>

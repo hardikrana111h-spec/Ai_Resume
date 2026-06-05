@@ -35,11 +35,11 @@ const features = [
     title: "AI Resume Analysis",
     desc: "Upload PDF or DOCX and get ATS score, strengths, weaknesses, and missing skills instantly.",
   },
-  {
-    icon: LayoutTemplate,
-    title: "Resume Builder",
-    desc: "Build clean professional resumes with live preview, sections, and multiple modern templates.",
-  },
+  // {
+  //   icon: LayoutTemplate,
+  //   title: "Resume Builder",
+  //   desc: "Build clean professional resumes with live preview, sections, and multiple modern templates.",
+  // },
   {
     icon: ShieldCheck,
     title: "Private Reports",
@@ -115,24 +115,24 @@ const faqs = [
   },
 ];
 
-const pricing = [
-  {
-    name: "Free",
-    price: "₹0",
-    items: ["Basic analysis", "Limited exports", "Core templates"],
-  },
-  {
-    name: "Pro",
-    price: "₹199/mo",
-    items: ["Advanced AI analysis", "Builder access", "More templates"],
-    featured: true,
-  },
-  {
-    name: "Premium",
-    price: "₹499/mo",
-    items: ["Priority support", "Unlimited exports", "Full AI toolkit"],
-  },
-];
+// const pricing = [
+//   {
+//     name: "Free",
+//     price: "₹0",
+//     items: ["Basic analysis", "Limited exports", "Core templates"],
+//   },
+//   {
+//     name: "Pro",
+//     price: "₹199/mo",
+//     items: ["Advanced AI analysis", "Builder access", "More templates"],
+//     featured: true,
+//   },
+//   {
+//     name: "Premium",
+//     price: "₹499/mo",
+//     items: ["Priority support", "Unlimited exports", "Full AI toolkit"],
+//   },
+// ];
 
 const testimonials = [
   {
@@ -1032,7 +1032,7 @@ export default function Home() {
           </span>
 
           <h1 className="hp-title">
-            Build better resumes and analyze them with smart AI
+            Analyze them with smart AI
           </h1>
 
           <p className="hp-sub">
@@ -1044,14 +1044,14 @@ export default function Home() {
             <Link to="/analyze" className="primary-btn">
               Start Analysis <ArrowRight size={16} />
             </Link>
-            <Link to="/resume-builder" className="secondary-btn">
+            {/* <Link to="/resume-builder" className="secondary-btn">
               Open Resume Builder
-            </Link>
+            </Link> */}
           </div>
 
           <div className="hp-tags">
             <span>ATS score</span>
-            <span>Resume templates</span>
+            {/* <span>Resume templates</span> */}
             <span>Google login</span>
             <span>Private reports</span>
           </div>
@@ -1225,7 +1225,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="templates" className="hp-surface glass">
+      {/* <section id="templates" className="hp-surface glass">
         <div className="hp-section-title">
           <div>
             <h2>Resume Builder templates</h2>
@@ -1262,7 +1262,7 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
 
       <section id="reviews" className="hp-surface glass">
         <div className="hp-section-title">
@@ -1292,7 +1292,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="pricing" className="hp-surface glass">
+      {/* <section id="pricing" className="hp-surface glass">
   <div className="hp-section-title">
     <div>
       <h2>Pricing</h2>
@@ -1356,7 +1356,7 @@ export default function Home() {
       </div>
     </div>
   </div>
-</section>
+</section> */}
       <section id="faq" className="hp-surface glass">
         <div className="hp-section-title">
           <div>
@@ -1427,10 +1427,10 @@ export default function Home() {
         <strong className="status-online">Operational</strong>
       </div>
 
-      <div className="status-item">
+      {/* <div className="status-item">
         <span>Resume Builder</span>
         <strong className="status-online">Operational</strong>
-      </div>
+      </div> */}
 
       <div className="status-item">
         <span>AI Features</span>
@@ -1457,9 +1457,9 @@ export default function Home() {
           <Link to="/analyze" className="primary-btn">
             Analyze Resume
           </Link>
-          <Link to="/resume-builder" className="secondary-btn">
+          {/* <Link to="/resume-builder" className="secondary-btn">
             Build Resume
-          </Link>
+          </Link> */}
         </div>
       </section>
     </div>

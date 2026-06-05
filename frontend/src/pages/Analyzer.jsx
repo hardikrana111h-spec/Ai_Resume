@@ -1178,7 +1178,7 @@ export default function Analyzer() {
           </p>
         </div>
 
-        <div className="hero-actions">
+        {/* <div className="hero-actions">
           <button
             type="button"
             className="secondary-btn"
@@ -1195,7 +1195,7 @@ export default function Analyzer() {
             <Sparkles size={16} />
             Open Builder
           </button>
-        </div>
+        </div> */}
       </section>
 
       <div className="analyze-grid">

@@ -69,11 +69,11 @@ export const submitContact = async (req, res) => {
       message: "Message sent successfully",
     });
   } catch (error) {
-    console.error("CONTACT ERROR:", error);
+  console.error("CONTACT ERROR FULL:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to send message",
-    });
-  }
+  return res.status(500).json({
+    success: false,
+    message: error.message,
+  });
+}
 };

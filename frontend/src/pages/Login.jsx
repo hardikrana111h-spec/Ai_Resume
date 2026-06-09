@@ -23,6 +23,7 @@ function generateCaptcha() {
 export default function Login() {
   const navigate = useNavigate();
   const googleBtn = useRef(null);
+  const initialized = useRef(false);
   const { setUser } = useAuth();
 
   const [mode, setMode] = useState("login");
@@ -98,15 +99,20 @@ export default function Login() {
     };
 
     const initializeGoogle = () => {
-      if (!window.google || !googleBtn.current) return;
-      window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        ux_mode: "popup",
-        callback: handleGoogleResponse,
-      });
-      renderGoogleButton();
-      setGoogleReady(true);
-    };
+  if (!window.google || !googleBtn.current) return;
+  if (initialized.current) return;
+
+  initialized.current = true;
+
+  window.google.accounts.id.initialize({
+    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+    ux_mode: "popup",
+    callback: handleGoogleResponse,
+  });
+
+  renderGoogleButton();
+  setGoogleReady(true);
+};
 
     const loadGoogleScript = () => {
       if (window.google) {
@@ -131,7 +137,7 @@ export default function Login() {
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [navigate, setUser, googleReady]);
+  }, []);
 
   // Basic email validation regex for frontend security
   const isValidEmail = (emailStr) => {

@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  ArrowRight,
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  RefreshCw,
-} from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail, RefreshCw } from "lucide-react";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 
@@ -36,6 +29,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [googleReady, setGoogleReady] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("resume_token")) {
@@ -50,7 +44,7 @@ export default function Login() {
 
   const title = useMemo(
     () => (mode === "login" ? "Welcome Back" : "Create Account"),
-    [mode]
+    [mode],
   );
 
   const subtitle = useMemo(
@@ -58,7 +52,7 @@ export default function Login() {
       mode === "login"
         ? "Login to access your resume reports."
         : "Create a secure account to get started.",
-    [mode]
+    [mode],
   );
 
   // Optimized Google Script Loading
@@ -67,7 +61,7 @@ export default function Login() {
       try {
         setError("");
         setSuccess("");
-        setLoading(true);
+        setGoogleLoading(true);
 
         const res = await api.post("/api/auth/google", {
           credential: response.credential,
@@ -75,13 +69,20 @@ export default function Login() {
 
         localStorage.setItem("resume_token", res.data.token);
         localStorage.setItem("resume_user", JSON.stringify(res.data.user));
+
         setUser(res.data.user);
 
-        setSuccess("Google login successful!");
-        navigate("/");
+        setGoogleLoading(false);
+
+        navigate("/", { replace: true });
+
+        // localStorage.setItem("resume_token", res.data.token);
+        // localStorage.setItem("resume_user", JSON.stringify(res.data.user));
+
+        // setUser(res.data.user);
       } catch (err) {
         setError(err.response?.data?.message || "Google login failed");
-        setLoading(false);
+        setGoogleLoading(false);
       }
     };
 
@@ -99,20 +100,20 @@ export default function Login() {
     };
 
     const initializeGoogle = () => {
-  if (!window.google || !googleBtn.current) return;
-  if (initialized.current) return;
+      if (!window.google || !googleBtn.current) return;
+      if (initialized.current) return;
 
-  initialized.current = true;
+      initialized.current = true;
 
-  window.google.accounts.id.initialize({
-    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-    ux_mode: "popup",
-    callback: handleGoogleResponse,
-  });
+      window.google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        ux_mode: "popup",
+        callback: handleGoogleResponse,
+      });
 
-  renderGoogleButton();
-  setGoogleReady(true);
-};
+      renderGoogleButton();
+      setGoogleReady(true);
+    };
 
     const loadGoogleScript = () => {
       if (window.google) {
@@ -177,18 +178,19 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const endpoint = mode === "signup" ? "/api/auth/signup" : "/api/auth/login";
-      const res = await api.post(endpoint, { 
-        email: sanitizedEmail, 
-        password: sanitizedPassword 
+      const endpoint =
+        mode === "signup" ? "/api/auth/signup" : "/api/auth/login";
+      const res = await api.post(endpoint, {
+        email: sanitizedEmail,
+        password: sanitizedPassword,
       });
 
       localStorage.setItem("resume_token", res.data.token);
       localStorage.setItem("resume_user", JSON.stringify(res.data.user));
+
       setUser(res.data.user);
 
-      setSuccess(mode === "signup" ? "Account created successfully!" : "Login successful!");
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Authentication failed");
       setLoading(false);
@@ -629,27 +631,40 @@ export default function Login() {
             </>
           )}
 
-          <button className="login-primary-btn" disabled={loading}>
-            {loading ? "Authenticating..." : mode === "login" ? "Secure Login" : "Create Account"}{" "}
-            {!loading && <ArrowRight size={16} />}
+          <button
+            className="login-primary-btn"
+            disabled={loading || googleLoading}
+          >
+            {loading || googleLoading
+              ? "Authenticating..."
+              : mode === "login"
+                ? "Secure Login"
+                : "Create Account"}{" "}
+            {!(loading || googleLoading) && <ArrowRight size={16} />}
           </button>
         </form>
 
         <div className="divider">OR CONTINUE WITH</div>
 
         <div className="google-wrapper">
-          {loading ? (
-            <div className="google-placeholder" style={{ color: '#4f46e5', borderColor: '#4f46e5' }}>
+          {googleLoading ? (
+            <div
+              className="google-placeholder"
+              style={{ color: "#4f46e5", borderColor: "#4f46e5" }}
+            >
               Verifying Secure Login...
             </div>
           ) : (
-            <div ref={googleBtn} style={{ display: loading ? 'none' : 'block', width: '100%' }} />
+            <div
+              ref={googleBtn}
+              style={{
+                display: googleLoading ? "none" : "block",
+              }}
+            />
           )}
-          
-          {!googleReady && !loading && (
-            <div className="google-placeholder">
-              Loading secure services...
-            </div>
+
+          {!googleReady && !googleLoading && (
+            <div className="google-placeholder">Loading secure services...</div>
           )}
         </div>
 

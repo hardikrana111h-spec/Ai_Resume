@@ -17,9 +17,9 @@ app.get("/health", (req, res) => {
 
 app.use(
   cors({
-    origin: true,
+    origin: ["http://localhost:5173", "https://ai-resume-s7lv.onrender.com"],
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json({ limit: "10mb" }));

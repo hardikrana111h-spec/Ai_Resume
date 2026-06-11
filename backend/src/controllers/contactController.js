@@ -38,6 +38,10 @@ export const submitContact = async (req, res) => {
       `,
     });
 
+    console.log("EMAIL_USER =", process.env.EMAIL_USER);
+    console.log("OWNER_EMAIL =", process.env.OWNER_EMAIL);
+    console.log("USER_EMAIL =", userEmail);
+
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: userEmail,
@@ -69,11 +73,11 @@ export const submitContact = async (req, res) => {
       message: "Message sent successfully",
     });
   } catch (error) {
-  console.error("CONTACT ERROR FULL:", error);
+    console.error("CONTACT ERROR FULL:", error);
 
-  return res.status(500).json({
-    success: false,
-    message: error.message,
-  });
-}
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };

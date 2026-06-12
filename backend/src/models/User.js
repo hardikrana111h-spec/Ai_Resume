@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+
     email: {
       type: String,
       required: true,
@@ -14,28 +15,43 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+
     password: {
       type: String,
       default: "",
     },
+
     googleId: {
       type: String,
       default: "",
       index: true,
     },
+
     picture: {
       type: String,
       default: "",
     },
+
     authProvider: {
       type: String,
       enum: ["local", "google"],
       default: "local",
     },
+
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model(
+  "User",
+  userSchema
+);
 
 export default User;

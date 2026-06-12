@@ -13,6 +13,7 @@ const createToken = (user) => {
       name: user.name || "",
       picture: user.picture || "",
       authProvider: user.authProvider || "local",
+      role: user.role || "user", // ADD THIS
     },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
@@ -26,6 +27,7 @@ const sanitizeUser = (user) => ({
   email: user.email,
   picture: user.picture || "",
   authProvider: user.authProvider || "local",
+  role: user.role || "user",
 });
 
 export const signup = async (req, res) => {

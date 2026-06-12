@@ -10,10 +10,7 @@ export default function Navbar() {
 
   const displayName = useMemo(() => {
     return (
-      user?.name ||
-      user?.displayName ||
-      user?.email?.split("@")?.[0] ||
-      "User"
+      user?.name || user?.displayName || user?.email?.split("@")?.[0] || "User"
     );
   }, [user]);
 
@@ -115,42 +112,39 @@ export default function Navbar() {
               {displayName}
             </div>
 
-            <button
-              type="button"
-              className="logout-btn"
-              onClick={handleLogout}
-            >
+            <button type="button" className="logout-btn" onClick={handleLogout}>
               Logout
             </button>
             <div className="more-menu">
-  <button
-    type="button"
-    className="more-btn"
-    onClick={() => setMoreOpen(!moreOpen)}
-  >
-    ⋮
-  </button>
+              <button
+                type="button"
+                className="more-btn"
+                onClick={() => setMoreOpen(!moreOpen)}
+              >
+                ⋮
+              </button>
 
-  {moreOpen && (
-    <div className="more-dropdown">
-      <NavLink to="/" onClick={() => setMoreOpen(false)}>
-        Home
-      </NavLink>
-      <NavLink to="/about" onClick={() => setMoreOpen(false)}>
-        About
-      </NavLink>
-      <NavLink to="/pricing" onClick={() => setMoreOpen(false)}>
-        Pricing
-      </NavLink>
-      <NavLink to="/contact" onClick={() => setMoreOpen(false)}>
-        Contact
-      </NavLink>
-      <NavLink to="/help" onClick={() => setMoreOpen(false)}>
-        Help
-      </NavLink>
-    </div>
-  )}
-</div>
+              {moreOpen && (
+                <div className="more-dropdown">
+                  <NavLink to="/" onClick={() => setMoreOpen(false)}>
+                    Home
+                  </NavLink>
+                  <NavLink to="/about" onClick={() => setMoreOpen(false)}>
+                    About
+                  </NavLink>
+                  <NavLink to="/pricing" onClick={() => setMoreOpen(false)}>
+                    Pricing
+                  </NavLink>
+                  <NavLink to="/contact" onClick={() => setMoreOpen(false)}>
+                    Contact
+                  </NavLink>
+                  <NavLink to="/help" onClick={() => setMoreOpen(false)}>
+                    Help
+                  </NavLink>
+                  <Link to="/admin/contacts">Contacts</Link>
+                </div>
+              )}
+            </div>
           </>
         ) : (
           <button

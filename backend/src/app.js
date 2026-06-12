@@ -15,11 +15,22 @@ app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://ai-resume-five-red.vercel.app",
+];
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://ai-resume-s7lv.onrender.com"],
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed"));
+      }
+    },
     credentials: true,
-  }),
+  })
 );
 
 app.use(express.json({ limit: "10mb" }));

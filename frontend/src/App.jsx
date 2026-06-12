@@ -20,6 +20,8 @@ import MainLayout from "./layouts/MainLayout";
 import ScrollToTop from "./components/ScrollToTop";
 import { NetworkProvider } from "./context/NetworkContext";
 import UpgradeBlock from "./components/UpgradeBlock";
+import AdminContacts from "./pages/admin/AdminContacts";
+
 
 function UpgradeRoute({ children, block = false }) {
   if (SITE_UPGRADE_MODE && block) {

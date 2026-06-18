@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
@@ -141,7 +141,12 @@ export default function Navbar() {
                   <NavLink to="/help" onClick={() => setMoreOpen(false)}>
                     Help
                   </NavLink>
-                  <Link to="/admin/contacts">Contacts</Link>
+                  <NavLink
+                    to="/admin/contacts"
+                    onClick={() => setMoreOpen(false)}
+                  >
+                    Contacts
+                  </NavLink>
                 </div>
               )}
             </div>

@@ -1,164 +1,141 @@
-import { useMemo, useState } from "react";
-import { NavLink, Link, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const [moreOpen, setMoreOpen] = useState(false);
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const displayName = useMemo(() => {
     return (
-      user?.name || user?.displayName || user?.email?.split("@")?.[0] || "User"
+      user?.name ||
+      user?.displayName ||
+      user?.email?.split("@")[0] ||
+      "User"
     );
   }, [user]);
 
-  const closeMenu = () => setMenuOpen(false);
-
   const handleLogout = () => {
     logout();
-    closeMenu();
     navigate("/login");
   };
 
-  const navClass = ({ isActive }) => `nav-link ${isActive ? "active" : ""}`;
+  const navClass = ({ isActive }) =>
+    isActive ? "nav-link active" : "nav-link";
 
   return (
-    <header className="site-navbar glass">
-      <button
-        type="button"
-        className="nav-brand"
-        onClick={() => {
-          closeMenu();
-          navigate("/");
-        }}
-        style={{
-          border: "none",
-          background: "transparent",
-          padding: 0,
-          textAlign: "left",
-          cursor: "pointer",
-        }}
+    <header className="navbar">
+      <div
+        className="navbar-logo"
+        onClick={() => navigate("/")}
       >
-        <div className="brand-logo">AI</div>
-        <div className="brand-copy">
-          <strong>AI Resume Analyzer</strong>
-          <span>AI SaaS • ATS Score </span>
+        <div className="logo-circle">AI</div>
+
+        <div>
+          <h3>AI Resume Analyzer</h3>
+          <span>ATS Resume Platform</span>
         </div>
-      </button>
+      </div>
 
       <button
-        type="button"
-        className="nav-menu-btn"
-        onClick={() => setMenuOpen((prev) => !prev)}
-        aria-label="Toggle navigation menu"
-        aria-expanded={menuOpen}
-        style={{
-          border: "none",
-          background: "transparent",
-          fontSize: "28px",
-          fontWeight: 900,
-          color: "#0f172a",
-          cursor: "pointer",
-          display: "none",
-        }}
+        className="mobile-btn"
+        onClick={() => setMobileOpen(!mobileOpen)}
       >
-        ☰
+        {mobileOpen ? <X size={26} /> : <Menu size={26} />}
       </button>
 
       <nav
-        className={`nav-links ${menuOpen ? "open" : ""}`}
-        onClick={closeMenu}
+        className={`navbar-links ${
+          mobileOpen ? "show" : ""
+        }`}
       >
-        {/* <NavLink to="/" end className={navClass}>
+        <NavLink to="/" className={navClass}>
           Home
         </NavLink>
+
         <NavLink to="/about" className={navClass}>
           About
         </NavLink>
+
         <NavLink to="/pricing" className={navClass}>
           Pricing
         </NavLink>
+
         <NavLink to="/contact" className={navClass}>
           Contact
         </NavLink>
+
         <NavLink to="/help" className={navClass}>
           Help
-        </NavLink> */}
+        </NavLink>
 
         {user && (
           <>
-            <NavLink to="/analyze" className={navClass}>
+            <NavLink
+              to="/analyze"
+              className={navClass}
+            >
               Analyze
             </NavLink>
-            {/* <NavLink to="/resume-builder" className={navClass}>
-              Resume Builder
-            </NavLink> */}
-            <NavLink to="/history" className={navClass}>
+
+            <NavLink
+              to="/history"
+              className={navClass}
+            >
               Reports
             </NavLink>
           </>
         )}
       </nav>
 
-      <div
-        className={`nav-actions ${menuOpen ? "open" : ""}`}
-        style={{ display: "flex", alignItems: "center", gap: "12px" }}
-      >
+      <div className="navbar-right">
         {user ? (
           <>
-            <div className="user-pill" title={displayName}>
+            <div className="user-chip">
               {displayName}
             </div>
 
-            <button type="button" className="logout-btn" onClick={handleLogout}>
-              Logout
-            </button>
-            <div className="more-menu">
+            <div className="dropdown">
               <button
-                type="button"
                 className="more-btn"
-                onClick={() => setMoreOpen(!moreOpen)}
+                onClick={() =>
+                  setMoreOpen(!moreOpen)
+                }
               >
-                ⋮
+                More
+                <ChevronDown size={16} />
               </button>
 
               {moreOpen && (
-                <div className="more-dropdown">
-                  <NavLink to="/" onClick={() => setMoreOpen(false)}>
-                    Home
-                  </NavLink>
-                  <NavLink to="/about" onClick={() => setMoreOpen(false)}>
-                    About
-                  </NavLink>
-                  <NavLink to="/pricing" onClick={() => setMoreOpen(false)}>
-                    Pricing
-                  </NavLink>
-                  <NavLink to="/contact" onClick={() => setMoreOpen(false)}>
-                    Contact
-                  </NavLink>
-                  <NavLink to="/help" onClick={() => setMoreOpen(false)}>
-                    Help
-                  </NavLink>
+                <div className="dropdown-menu">
                   <NavLink
                     to="/admin/contacts"
-                    onClick={() => setMoreOpen(false)}
+                    onClick={() =>
+                      setMoreOpen(false)
+                    }
                   >
-                    Contacts
+                    Admin Contacts
                   </NavLink>
+
+                  <button
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </button>
                 </div>
               )}
             </div>
           </>
         ) : (
           <button
-            type="button"
-            className="nav-login-btn"
-            onClick={() => {
-              closeMenu();
-              navigate("/login");
-            }}
+            className="login-btn"
+            onClick={() =>
+              navigate("/login")
+            }
           >
             Login
           </button>

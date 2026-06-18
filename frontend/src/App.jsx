@@ -20,7 +20,7 @@ import MainLayout from "./layouts/MainLayout";
 import ScrollToTop from "./components/ScrollToTop";
 import { NetworkProvider } from "./context/NetworkContext";
 import UpgradeBlock from "./components/UpgradeBlock";
-import AdminContacts from "./pages/admin/AdminContacts";
+// import AdminContacts from "./pages/admin/AdminContacts";
 
 
 function UpgradeRoute({ children, block = false }) {
@@ -52,7 +52,7 @@ export default function App() {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
-          <Route path="/admin/contacts" element={<AdminContacts />} />
+          {/* <Route path="/admin/contacts" element={<AdminContacts />} /> */}
         </Route>
 
         <Route

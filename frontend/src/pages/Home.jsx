@@ -1013,7 +1013,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className="hp-nav glass">
+      {/* <div className="hp-nav glass">
         <a className="hp-link" href="#overview">Overview</a>
         <a className="hp-link" href="#trust">Trust</a>
         <a className="hp-link" href="#features">Features</a>
@@ -1023,7 +1023,7 @@ export default function Home() {
         <a className="hp-link" href="#pricing">Pricing</a>
         <a className="hp-link" href="#faq">FAQ</a>
         <a className="hp-link" href="#contact">Contact</a>
-      </div>
+      </div> */}
 
       <section id="overview" className="hp-hero glass">
         <div className="hp-left">

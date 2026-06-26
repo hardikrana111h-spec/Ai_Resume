@@ -1264,7 +1264,7 @@ export default function Home() {
         </div>
       </section> */}
 
-      <section id="reviews" className="hp-surface glass">
+      {/* <section id="reviews" className="hp-surface glass">
         <div className="hp-section-title">
           <div>
             <h2>What users say</h2>
@@ -1290,7 +1290,7 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* <section id="pricing" className="hp-surface glass">
   <div className="hp-section-title">
@@ -1391,7 +1391,7 @@ export default function Home() {
         <Mail size={16} />
         <div>
           <strong>Email Support</strong>
-          <span>support@airesumeanalyzer.com</span>
+          <span>hardikrana777r@gmail.com</span>
         </div>
       </div>
 

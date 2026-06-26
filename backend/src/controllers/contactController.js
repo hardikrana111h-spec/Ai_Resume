@@ -13,8 +13,15 @@ export const submitContact = async (req, res) => {
 
     const userEmail = req.user?.email;
 
+    if (!userEmail) {
+      return res.status(401).json({
+        success: false,
+        message: "User email not found",
+      });
+    }
+
     const contact = await Contact.create({
-      user: req.user._uid,
+      user: req.user.uid,
       name,
       email: userEmail,
       message,
@@ -26,11 +33,11 @@ export const submitContact = async (req, res) => {
       contact,
     });
   } catch (error) {
-    console.error(error);
+    console.error("CONTACT ERROR:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to submit message",
+      message: error.message || "Failed to submit message",
     });
   }
 };

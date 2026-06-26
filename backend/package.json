@@ -2,7 +2,7 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
@@ -23,6 +23,7 @@
     "nodemailer": "^8.0.11",
     "openai": "^6.39.0",
     "pdfjs-dist": "^5.7.284",
+    "razorpay": "^2.9.6",
     "zod": "^4.4.3",
     "zod-to-json-schema": "^3.25.2"
   },

@@ -43,6 +43,11 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    // Add these inside your existing UserSchema:
+  plan: { type: String, default: "Free Trial" },
+  paymentId: String,
+  analysisCount: { type: Number, default: 0 },
+  lastAnalysisDate: { type: Date, default: null }
   },
   {
     timestamps: true,

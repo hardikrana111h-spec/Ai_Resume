@@ -137,7 +137,11 @@ export default function Pricing() {
     // ==========================================
     // 1. LIVE TIMER POPUP LOGIC (Check Active Plan)
     // ==========================================
-    if (planData && !planData.isPlanExpired) {
+    if (
+      planData &&
+      planData.expiryDate &&
+      new Date(planData.expiryDate) > new Date()
+    ) {
       const expiry = new Date(planData.expiryDate).getTime();
 
       let interval;

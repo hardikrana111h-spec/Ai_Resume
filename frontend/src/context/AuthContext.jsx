@@ -7,27 +7,49 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("resume_user");
-    if (storedUser) {
-      try {
+    try {
+      const token = localStorage.getItem("resume_token");
+      const storedUser = localStorage.getItem("resume_user");
+
+      if (token && storedUser) {
         setUser(JSON.parse(storedUser));
-      } catch {
-        localStorage.removeItem("resume_user");
+      } else {
         localStorage.removeItem("resume_token");
+        localStorage.removeItem("resume_user");
       }
+    } catch (err) {
+      console.error(err);
+
+      localStorage.removeItem("resume_token");
+      localStorage.removeItem("resume_user");
+
+      setUser(null);
     }
+
     setLoading(false);
   }, []);
 
   const logout = () => {
+    // Clear every session
     localStorage.removeItem("resume_token");
     localStorage.removeItem("resume_user");
+
+    sessionStorage.clear();
+
     setUser(null);
-    window.location.href = "/login";
+
+    window.location.replace("/login");
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        setUser,
+        logout,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

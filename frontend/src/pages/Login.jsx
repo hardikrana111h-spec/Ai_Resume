@@ -67,6 +67,11 @@ export default function Login() {
           credential: response.credential,
         });
 
+        // Clear previous session
+        localStorage.removeItem("resume_token");
+        localStorage.removeItem("resume_user");
+
+        // Save current user
         localStorage.setItem("resume_token", res.data.token);
         localStorage.setItem("resume_user", JSON.stringify(res.data.user));
 
@@ -185,6 +190,11 @@ export default function Login() {
         password: sanitizedPassword,
       });
 
+      // Clear previous session
+      localStorage.removeItem("resume_token");
+      localStorage.removeItem("resume_user");
+
+      // Save current user
       localStorage.setItem("resume_token", res.data.token);
       localStorage.setItem("resume_user", JSON.stringify(res.data.user));
 

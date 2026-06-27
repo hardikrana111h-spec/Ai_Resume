@@ -2,83 +2,114 @@ import User from "../models/User.js";
 
 export const getPlanStatus = async (req, res) => {
   try {
-    // Tmara auth middleware pramane req.user.uid ya req.user._id use karjo
-    const userId = req.user?.uid || req.user?._id;
+    // JWT thi current logged in user
+    const userId = req.user?.uid;
 
-    if (!userId && !req.user?.email) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
     }
 
-    const user = await User.findOne({
-      $or: [{ _id: userId }, { googleId: userId }, { email: req.user.email }],
-    });
+    // Find only current logged in user
+    const user = await User.findById(userId);
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
-    // ==========================================
-    // 1. DAILY RESET LOGIC (Raat na 12 vagye reset)
-    // ==========================================
-    const todayStr = new Date().toISOString().split("T")[0];
+    // Daily Reset
+    const today = new Date().toISOString().split("T")[0];
 
-    if (user.lastResetDate !== todayStr) {
+    if (user.lastResetDate !== today) {
       user.todayUsed = 0;
-      user.lastResetDate = todayStr;
-      await user.save(); // DB update kari didhu
+      user.lastResetDate = today;
+      await user.save();
     }
 
-    // ==========================================
-    // 2. CALCULATE REMAINING LIMIT
-    // ==========================================
+    // Plan Expiry Check
+    let isPlanExpired = false;
+
+    if (user.planExpiryDate) {
+      isPlanExpired = new Date(user.planExpiryDate) <= new Date();
+
+      if (isPlanExpired) {
+        // Automatically reset expired users to Free Trial
+        user.plan = "Free Trial";
+        user.dailyLimit = 3;
+        user.todayUsed = 0;
+        user.planStartDate = new Date();
+
+        const expiry = new Date();
+        expiry.setDate(expiry.getDate() + 3);
+        user.planExpiryDate = expiry;
+
+        await user.save();
+      }
+    }
+
+    // Remaining Limit
     const remainingLimit =
       user.dailyLimit === -1
         ? "Unlimited"
         : Math.max(0, user.dailyLimit - user.todayUsed);
 
-    // ===== Live Countdown =====
+    // Live Timer
     const now = new Date();
     const expiry = new Date(user.planExpiryDate);
 
     let totalSeconds = Math.max(
       0,
-      Math.floor((expiry.getTime() - now.getTime()) / 1000),
+      Math.floor((expiry.getTime() - now.getTime()) / 1000)
     );
 
-    const daysLeft = Math.floor(totalSeconds / (24 * 60 * 60));
-    totalSeconds %= 24 * 60 * 60;
+    const daysLeft = Math.floor(totalSeconds / 86400);
+    totalSeconds %= 86400;
 
-    const hoursLeft = Math.floor(totalSeconds / (60 * 60));
-    totalSeconds %= 60 * 60;
+    const hoursLeft = Math.floor(totalSeconds / 3600);
+    totalSeconds %= 3600;
 
     const minutesLeft = Math.floor(totalSeconds / 60);
-
     const secondsLeft = totalSeconds % 60;
 
-    const isPlanExpired = expiry <= now;
-
-    return res.json({
+    return res.status(200).json({
       success: true,
+
       planData: {
-        planName: user.plan || "Free Trial",
-        dailyLimit: user.dailyLimit == -1 ? "Unlimited" : user.dailyLimit,
+        planName: user.plan,
+
+        dailyLimit:
+          user.dailyLimit === -1
+            ? "Unlimited"
+            : user.dailyLimit,
+
         todayUsed: user.todayUsed,
+
         remainingLimit,
-        daysLeft,
-        hoursLeft,
-        minutesLeft,
-        secondsLeft,
-        isPlanExpired,
+
         expiryDate: user.planExpiryDate,
-        lastResetDate: user.lastResetDate,
+
+        daysLeft,
+
+        hoursLeft,
+
+        minutesLeft,
+
+        secondsLeft,
+
+        isPlanExpired,
       },
     });
-  } catch (error) {
-    console.error("GET PLAN STATUS ERROR:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Server error fetching plan status" });
+  } catch (err) {
+    console.error("PLAN STATUS ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch plan status",
+    });
   }
 };

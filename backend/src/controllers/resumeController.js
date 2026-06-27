@@ -116,9 +116,33 @@ export const analyzeResume = async (req, res) => {
     // ==========================================
     // BACKEND LIMIT & VALIDITY CHECK START
     // ==========================================
-    const user = await User.findOne({
-      $or: [{ _id: req.user.uid }, { googleId: req.user.uid }],
-    });
+    let user = await User.findById(req.user.uid);
+
+    if (!user && req.user?.email) {
+      user = await User.findOne({
+        email: req.user.email.toLowerCase(),
+      });
+    }
+
+    // Safety: if somehow user record is missing, create one.
+    if (!user) {
+      user = await User.create({
+        name: req.user.name || req.user.email.split("@")[0],
+        email: req.user.email.toLowerCase(),
+
+        plan: "Free Trial",
+
+        dailyLimit: 3,
+
+        todayUsed: 0,
+
+        lastResetDate: new Date().toISOString().split("T")[0],
+
+        planStartDate: new Date(),
+
+        planExpiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      });
+    }
 
     if (!user) {
       return res.status(404).json({
@@ -152,6 +176,8 @@ export const analyzeResume = async (req, res) => {
     if (user.lastResetDate !== today) {
       user.todayUsed = 0;
       user.lastResetDate = today;
+
+      await user.save();
     }
 
     // 3. Limit Check

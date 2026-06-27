@@ -114,7 +114,7 @@ export default function Analyzer() {
   useEffect(() => {
     const loadPlan = async () => {
       try {
-        const session = localStorage.getItem("resume_app_user");
+        const session = localStorage.getItem("resume_user");
         if (session) {
           setUser(JSON.parse(session));
         }

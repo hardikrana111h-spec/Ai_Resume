@@ -58,36 +58,15 @@ export default function Pricing() {
   const navigate = useNavigate();
 
   // Get user from local storage
-  const savedSession = JSON.parse(
-    localStorage.getItem("resume_app_user") || "{}",
-  );
+  const savedSession = JSON.parse(localStorage.getItem("resume_user") || "{}");
   const userEmail = savedSession?.email || "";
 
   useEffect(() => {
-    const loadPlan = async () => {
-      try {
-        const res = await api.get("/api/user/plan-status");
-
-        if (res.data.success) {
-          setPlanData(res.data.planData);
-          setTimeLeft({
-            days: res.data.planData.daysLeft,
-            hours: res.data.planData.hoursLeft,
-            minutes: res.data.planData.minutesLeft,
-            seconds: res.data.planData.secondsLeft,
-          });
-          setCurrentPlan(res.data.planData.planName);
-
-          if (res.data.planData.planName !== "Free Trial") {
-            setHasUsedFreeTrial(true);
-          }
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
     loadPlan();
+
+    const interval = setInterval(loadPlan, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -139,6 +118,7 @@ export default function Pricing() {
     // ==========================================
     if (
       planData &&
+      planData.planName === plan.name &&
       planData.expiryDate &&
       new Date(planData.expiryDate) > new Date()
     ) {
@@ -276,7 +256,7 @@ export default function Pricing() {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
-            userEmail: userEmail,
+            userEmail,
             planName: plan.name,
           });
 
@@ -286,6 +266,12 @@ export default function Pricing() {
             setCurrentPlan(plan.name);
 
             setPlanData(verifyData.planData);
+
+            const latest = await api.get("/api/user/plan-status");
+
+            setPlanData(latest.data.planData);
+
+            setCurrentPlan(latest.data.planData.planName);
 
             setHasUsedFreeTrial(true);
 
@@ -359,7 +345,10 @@ export default function Pricing() {
 
           <div className="feature-grid">
             {plans.map((plan) => {
-              const isCurrentPlan = planData?.planName === plan.name;
+              const isCurrentPlan =
+                planData &&
+                planData.planName === plan.name &&
+                !planData.isPlanExpired;
               let buttonText = plan.defaultBtnText;
               let buttonClass =
                 plan.name === "Premium"
@@ -425,7 +414,9 @@ export default function Pricing() {
 
                   <button
                     className={buttonClass}
-                    disabled={isDisabled}
+                    disabled={
+                      isDisabled || (isCurrentPlan && !planData?.isPlanExpired)
+                    }
                     onClick={() => handlePayment(plan)}
                   >
                     {buttonText}

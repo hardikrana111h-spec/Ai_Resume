@@ -1,30 +1,35 @@
 import { useState, useMemo } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import {
+  CircleUserRound,
+  FileText,
+  CreditCard,
+  LogOut,
+  House,
+  ScanSearch,
+  BadgeDollarSign,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const [mobileOpen, setMobileOpen] = useState(false);
-
+  //const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
   const displayName = useMemo(() => {
     return (
-      user?.name ||
-      user?.displayName ||
-      user?.email?.split("@")[0] ||
-      "User"
+      user?.name || user?.displayName || user?.email?.split("@")[0] || "User"
     );
   }, [user]);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
-    setMobileOpen(false); 
+    setMobileOpen(false);
   };
 
-  const closeMenu = () => setMobileOpen(false);
+  //const closeMenu = () => setMobileOpen(false);
 
   const navClass = ({ isActive }) =>
     isActive ? "nav-link active" : "nav-link";
@@ -64,7 +69,7 @@ export default function Navbar() {
       </style>
 
       <header className="navbar">
-        <div className="navbar-logo" onClick={() => { navigate("/"); closeMenu(); }}>
+        <div className="navbar-logo" onClick={() => navigate("/")}>
           <div className="logo-circle">AI</div>
           <div>
             <h3>AI Resume Analyzer</h3>
@@ -72,58 +77,147 @@ export default function Navbar() {
           </div>
         </div>
 
-        <button
-          className="mobile-btn"
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          {mobileOpen ? <X size={26} /> : <Menu size={26} />}
-        </button>
+        {/* <div className="mobile-actions">
+          {user && (
+            <div className="mobile-profile">
+              <button
+                className="mobile-profile-btn"
+                onClick={() => setMobileProfileOpen(!mobileProfileOpen)}
+              >
+                <CircleUserRound size={24} />
+              </button>
 
-        <nav className={`navbar-links ${mobileOpen ? "show" : ""}`}>
-          
-          {/* Show User Name in Mobile Menu when Logged In */}
-          {user && mobileOpen && (
-            <div className="mobile-user-greeting">
-              Hello, {displayName} 👋
+              {mobileProfileOpen && (
+                <div className="mobile-profile-dropdown">
+                  <div className="mobile-profile-header">
+                    <div className="mobile-avatar">
+                      {displayName.charAt(0).toUpperCase()}
+                    </div>
+
+                    <h4>{displayName}</h4>
+
+                    <p>{user?.email}</p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      navigate("/history");
+                      setMobileProfileOpen(false);
+                    }}
+                  >
+                    <FileText size={18} />
+                    My Reports
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      navigate("/pricing");
+                      setMobileProfileOpen(false);
+                    }}
+                  >
+                    <CreditCard size={18} />
+                    My Plan
+                  </button>
+
+                  <button onClick={handleLogout} className="logout-btn-mobile">
+                    <LogOut size={18} />
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
-          <NavLink to="/" className={navClass} onClick={closeMenu}>Home</NavLink>
-          <NavLink to="/about" className={navClass} onClick={closeMenu}>About</NavLink>
-          <NavLink to="/pricing" className={navClass} onClick={closeMenu}>Pricing</NavLink>
-          <NavLink to="/contact" className={navClass} onClick={closeMenu}>Contact</NavLink>
-          <NavLink to="/help" className={navClass} onClick={closeMenu}>Help</NavLink>
+          <button
+            className="mobile-btn"
+            onClick={() => setMobileOpen(!mobileOpen)}
+          >
+            {mobileOpen ? <X size={26} /> : <Menu size={26} />}
+          </button>
+        </div> */}
+
+        <nav className="navbar-links desktop-nav">
+          <NavLink to="/" className={navClass}>
+            Home
+          </NavLink>
+
+          <NavLink to="/about" className={navClass}>
+            About
+          </NavLink>
+
+          <NavLink to="/pricing" className={navClass}>
+            Pricing
+          </NavLink>
+
+          <NavLink to="/contact" className={navClass}>
+            Contact
+          </NavLink>
+
+          <NavLink to="/help" className={navClass}>
+            Help
+          </NavLink>
 
           {user && (
             <>
-              <NavLink to="/analyze" className={navClass} onClick={closeMenu}>Analyze</NavLink>
-              <NavLink to="/history" className={navClass} onClick={closeMenu}>Reports</NavLink>
-              
-              <button 
-                className="nav-link logout-btn-inline" 
-                onClick={handleLogout}
-                style={{ background: "transparent", border: "none", cursor: "pointer", fontWeight: "600", color: "#ef4444" }}
-              >
-                Logout
-              </button>
+              <NavLink to="/analyze" className={navClass}>
+                Analyze
+              </NavLink>
+
+              <NavLink to="/history" className={navClass}>
+                Reports
+              </NavLink>
             </>
           )}
-
-          {/* Show Login button in mobile menu if NOT logged in */}
-          {!user && mobileOpen && (
-            <button 
-              className="login-btn" 
-              onClick={() => { navigate("/login"); closeMenu(); }}
-              style={{ marginTop: "15px", width: "85%" }}
-            >
-              Login
-            </button>
-          )}
         </nav>
-
         <div className="navbar-right">
           {user ? (
-            <div className="user-chip">{displayName}</div>
+            <div className="mobile-profile">
+              <button
+                className="mobile-profile-btn"
+                onClick={() => setMobileProfileOpen(!mobileProfileOpen)}
+              >
+                <CircleUserRound size={24} />
+              </button>
+
+              {mobileProfileOpen && (
+                <div className="mobile-profile-dropdown">
+                  <div className="mobile-profile-header">
+                    <div className="mobile-avatar">
+                      {displayName.charAt(0).toUpperCase()}
+                    </div>
+
+                    <h4>{displayName}</h4>
+
+                    <p>{user?.email}</p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      navigate("/history");
+                      setMobileProfileOpen(false);
+                    }}
+                  >
+                    <FileText size={18} />
+                    My Reports
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      navigate("/pricing");
+                      setMobileProfileOpen(false);
+                    }}
+                  >
+                    <CreditCard size={18} />
+                    My Plan
+                  </button>
+
+                  <button onClick={handleLogout} className="logout-btn-mobile">
+                    <LogOut size={18} />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <button className="login-btn" onClick={() => navigate("/login")}>
               Login
@@ -131,6 +225,31 @@ export default function Navbar() {
           )}
         </div>
       </header>
+      <div className="mobile-bottom-nav">
+        <NavLink to="/">
+          <House size={22} />
+          <span>Home</span>
+        </NavLink>
+
+        {user && (
+          <NavLink to="/analyze">
+            <ScanSearch size={22} />
+            <span>Analyze</span>
+          </NavLink>
+        )}
+
+        {user && (
+          <NavLink to="/history">
+            <FileText size={22} />
+            <span>Reports</span>
+          </NavLink>
+        )}
+
+        <NavLink to="/pricing">
+          <BadgeDollarSign size={22} />
+          <span>Plans</span>
+        </NavLink>
+      </div>
     </>
   );
 }

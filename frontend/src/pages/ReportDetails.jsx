@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api";
-import CountUp from "react-countup";
 
 function StatCard({ label, value, delay = 0 }) {
   return (

@@ -116,6 +116,23 @@ function normalizeAnalysis(data, resumeText = "") {
       : [],
     overallFeedback: data.overallFeedback || "",
     actionPlan: Array.isArray(data.actionPlan) ? data.actionPlan : [],
+    atsKeywordsFound: Array.isArray(data.atsKeywordsFound)
+      ? data.atsKeywordsFound
+      : [],
+
+    atsKeywordsMissing: Array.isArray(data.atsKeywordsMissing)
+      ? data.atsKeywordsMissing
+      : [],
+
+    recruiterTips: Array.isArray(data.recruiterTips) ? data.recruiterTips : [],
+
+    resumeHighlights: Array.isArray(data.resumeHighlights)
+      ? data.resumeHighlights
+      : [],
+
+    improvementPriority: Array.isArray(data.improvementPriority)
+      ? data.improvementPriority
+      : [],
   };
 }
 
@@ -154,6 +171,26 @@ function fallbackAnalysis({ resumeText, role }) {
       "Include role-specific keywords.",
       "Strengthen project descriptions.",
     ],
+    atsKeywordsFound: ["Communication", "Teamwork"],
+
+    atsKeywordsMissing: ["Docker", "CI/CD", "Testing"],
+
+    recruiterTips: [
+      "Quantify achievements wherever possible.",
+      "Tailor your resume for every application.",
+      "Keep technical skills updated.",
+    ],
+
+    resumeHighlights: [
+      "Clear resume structure.",
+      "Relevant educational background.",
+    ],
+
+    improvementPriority: [
+      "Add measurable achievements.",
+      "Improve project descriptions.",
+      "Include role-specific keywords.",
+    ],
   };
 }
 
@@ -166,25 +203,72 @@ You are a professional ATS resume analyzer.
 Analyze this resume for the role: ${role}
 
 Return ONLY valid JSON with exactly these keys:
-- atsScore (number 0 to 100)
+
+- atsScore (number 0-100)
+
 - overallLevel (string)
+
 - roleMatch (string)
-- strengths (array of strings)
-- weaknesses (array of strings)
-- missingSkills (array of strings)
+
+- strengths (array of 5-8 strings)
+
+- weaknesses (array of 4-6 strings)
+
+- missingSkills (array of 5-10 strings)
+
+- atsKeywordsFound (array of strings)
+
+- atsKeywordsMissing (array of strings)
+
+- recruiterTips (array of 4-6 strings)
+
+- resumeHighlights (array of 4-6 strings)
+
+- improvementPriority (array of 4-6 strings)
+
 - improvedSummary (string)
-- jobMatchRoles (array of strings)
-- interviewQuestions (array of strings)
+
+- jobMatchRoles (array of 5 strings)
+
+- interviewQuestions (array of 8 strings)
+
 - overallFeedback (string)
-- actionPlan (array of strings)
+
+- actionPlan (array of 6 strings)
 
 Rules:
-- Return only JSON
-- No markdown
-- No code fences
-- No extra text before or after JSON
-- Keep it practical and concise
-- Focus on ATS and junior/mid-level resumes
+
+- Return ONLY valid JSON.
+
+- Do not use markdown.
+
+- Do not wrap JSON inside code blocks.
+
+- Do not explain anything outside JSON.
+
+- ATS score must be realistic.
+
+- Strengths and weaknesses must be based only on the resume.
+
+- Missing skills should match the selected job role.
+
+- ATS keywords must contain important recruiter keywords already present in the resume.
+
+- ATS missing keywords should contain important role-specific keywords not found in the resume.
+
+- Recruiter tips must be practical and actionable.
+
+- Resume highlights should identify the candidate's strongest achievements or sections.
+
+- Improvement priority should list the highest-impact improvements first.
+
+- Improved summary should be ATS-friendly and professional.
+
+- Interview questions should be role-specific and practical.
+
+- Overall feedback should be detailed (around 120-180 words).
+
+- Action plan should be ordered from highest priority to lowest priority.
 
 Resume text:
 ${trimmedText}

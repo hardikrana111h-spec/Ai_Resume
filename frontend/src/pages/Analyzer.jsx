@@ -10,23 +10,61 @@ import {
   Upload,
   Wand2,
   Bot,
+  FileSearch,
+  Sparkles,
 } from "lucide-react";
 
 const ROLE_OPTIONS = [
-  "Frontend Developer", "React Developer", "Vue Developer", "Angular Developer",
-  "JavaScript Developer", "TypeScript Developer", "Next.js Developer",
-  "UI Developer", "Web Designer", "UI/UX Designer", "Graphic Designer",
-  "Backend Developer", "Node.js Developer", "Express.js Developer",
-  "Java Developer", "Spring Boot Developer", "Python Developer",
-  "Django Developer", "Flask Developer", "PHP Developer", "Laravel Developer",
-  "Full Stack Developer", "MERN Stack Developer", "Software Engineer",
-  "Mobile App Developer", "Android Developer", "Flutter Developer",
-  "React Native Developer", "AI Engineer", "Machine Learning Engineer",
-  "Prompt Engineer", "Data Scientist", "DevOps Engineer", "Cloud Engineer",
-  "Cyber Security Analyst", "Ethical Hacker", "QA Engineer",
-  "Automation Tester", "Product Manager", "Business Analyst", "SEO Specialist",
-  "Accountant", "Video Editor", "Mechanical Engineer", "Civil Engineer",
-  "Doctor", "Teacher", "BCA Fresher", "MCA Fresher", "Intern",
+  "Frontend Developer",
+  "React Developer",
+  "Vue Developer",
+  "Angular Developer",
+  "JavaScript Developer",
+  "TypeScript Developer",
+  "Next.js Developer",
+  "UI Developer",
+  "Web Designer",
+  "UI/UX Designer",
+  "Graphic Designer",
+  "Backend Developer",
+  "Node.js Developer",
+  "Express.js Developer",
+  "Java Developer",
+  "Spring Boot Developer",
+  "Python Developer",
+  "Django Developer",
+  "Flask Developer",
+  "PHP Developer",
+  "Laravel Developer",
+  "Full Stack Developer",
+  "MERN Stack Developer",
+  "Software Engineer",
+  "Mobile App Developer",
+  "Android Developer",
+  "Flutter Developer",
+  "React Native Developer",
+  "AI Engineer",
+  "Machine Learning Engineer",
+  "Prompt Engineer",
+  "Data Scientist",
+  "DevOps Engineer",
+  "Cloud Engineer",
+  "Cyber Security Analyst",
+  "Ethical Hacker",
+  "QA Engineer",
+  "Automation Tester",
+  "Product Manager",
+  "Business Analyst",
+  "SEO Specialist",
+  "Accountant",
+  "Video Editor",
+  "Mechanical Engineer",
+  "Civil Engineer",
+  "Doctor",
+  "Teacher",
+  "BCA Fresher",
+  "MCA Fresher",
+  "Intern",
 ];
 
 function PlusIcon() {
@@ -49,7 +87,12 @@ export default function Analyzer() {
   const [remainingLimit, setRemainingLimit] = useState(null);
   const [isLimitReached, setIsLimitReached] = useState(false);
   const [isPlanExpired, setIsPlanExpired] = useState(false);
-  const [daysLeft, setDaysLeft] = useState(0);
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
 
   const [activePlan, setActivePlan] = useState({
     name: "",
@@ -69,56 +112,97 @@ export default function Analyzer() {
   const [uploadComplete, setUploadComplete] = useState(false);
 
   useEffect(() => {
-    const savedSession = localStorage.getItem("resume_app_user");
-    if (savedSession) {
-      setUser(JSON.parse(savedSession));
-    }
+    const loadPlan = async () => {
+      try {
+        const session = localStorage.getItem("resume_app_user");
+        if (session) {
+          setUser(JSON.parse(session));
+        }
 
-    const savedPlanStr = localStorage.getItem("user_plan_data");
-    if (!savedPlanStr) {
-      setIsPlanExpired(true);
-      return;
-    }
+        const res = await api.get("/api/user/plan-status");
 
-    const savedPlan = JSON.parse(savedPlanStr);
-    const diff = Math.ceil((savedPlan.expiryDate - Date.now()) / (1000 * 60 * 60 * 24));
-    setDaysLeft(diff);
+        const plan = res.data.planData;
 
-    const today = new Date().toISOString().split("T")[0];
+        setRemainingLimit(plan.remainingLimit);
+        setTimeLeft({
+          days: plan.daysLeft,
+          hours: plan.hoursLeft,
+          minutes: plan.minutesLeft,
+          seconds: plan.secondsLeft,
+        });
 
-    // Issue 1: Fix Expiry Logic Brace Wrapping
-    if (Date.now() > savedPlan.expiryDate) {
-      Swal.fire({
-        icon: "error",
-        title: "Plan Expired",
-        html: `Your subscription has expired.<br><br>Please renew your plan.`,
-        confirmButtonText: "Renew Plan",
-        confirmButtonColor: "#dc2626",
-      }).then(() => navigate("/pricing"));
-      
-      setIsPlanExpired(true);
-      localStorage.removeItem("user_plan_data");
-      return;
-    }
+        setIsLimitReached(
+          plan.remainingLimit !== "Unlimited" && plan.remainingLimit <= 0,
+        );
 
-    // Reset Daily Usage on new day
-    if (savedPlan.lastResetDate !== today) {
-      savedPlan.todayUsed = 0;
-      savedPlan.lastResetDate = today;
-      localStorage.setItem("user_plan_data", JSON.stringify(savedPlan));
-    }
+        setIsPlanExpired(plan.daysLeft <= 0);
 
-    const remaining = savedPlan.dailyLimit - savedPlan.todayUsed;
-    setRemainingLimit(remaining);
-    setIsLimitReached(remaining <= 0);
+        setActivePlan({
+          name: plan.planName,
+          limit: plan.dailyLimit,
+          expiryDateStr: new Date(plan.expiryDate).toLocaleDateString("en-GB"),
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-    const expiry = new Date(savedPlan.expiryDate);
-    setActivePlan({
-      name: savedPlan.planName,
-      limit: savedPlan.dailyLimit,
-      expiryDateStr: expiry.toLocaleDateString("en-GB"),
-    });
-  }, [navigate]);
+    loadPlan();
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        let { days, hours, minutes, seconds } = prev;
+
+        if (days === 0 && hours === 0 && minutes === 0 && seconds === 0) {
+          return prev;
+        }
+
+        if (seconds > 0) {
+          seconds--;
+        } else {
+          seconds = 59;
+
+          if (minutes > 0) {
+            minutes--;
+          } else {
+            minutes = 59;
+
+            if (hours > 0) {
+              hours--;
+            } else {
+              hours = 23;
+
+              if (days > 0) {
+                days--;
+              }
+            }
+          }
+        }
+
+        const nextTime = {
+          days,
+          hours,
+          minutes,
+          seconds,
+        };
+
+        if (
+          nextTime.days === 0 &&
+          nextTime.hours === 0 &&
+          nextTime.minutes === 0 &&
+          nextTime.seconds === 0
+        ) {
+          setIsPlanExpired(true);
+        }
+
+        return nextTime;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const filteredRoles = useMemo(() => {
     const query = roleQuery.trim().toLowerCase();
@@ -128,12 +212,11 @@ export default function Analyzer() {
 
   useEffect(() => {
     const exactMatch = ROLE_OPTIONS.find(
-      (role) => role.toLowerCase() === roleQuery.trim().toLowerCase()
+      (role) => role.toLowerCase() === roleQuery.trim().toLowerCase(),
     );
     if (exactMatch) setSelectedRole(exactMatch);
   }, [roleQuery]);
 
-  // Issue 8: Simplified single-timer progress
   useEffect(() => {
     if (!loading) {
       setProgressValue(0);
@@ -149,7 +232,7 @@ export default function Analyzer() {
         clearInterval(interval);
       }
       setProgressValue(progress);
-      setProgressStep(Math.floor(progress / 25)); // Clean mapping
+      setProgressStep(Math.floor(progress / 25));
     }, 180);
 
     return () => clearInterval(interval);
@@ -170,10 +253,30 @@ export default function Analyzer() {
   };
 
   const analysisSteps = [
-    { no: "01", title: "Upload Resume", desc: "Select PDF or DOCX", icon: Upload },
-    { no: "02", title: "Extract Resume", desc: "AI reads your resume", icon: FileText },
-    { no: "03", title: "ATS Analysis", desc: "Keyword & ATS Scan", icon: ScanSearch },
-    { no: "04", title: "Generate Report", desc: "Complete AI Report", icon: Wand2 },
+    {
+      no: "01",
+      title: "Upload Resume",
+      desc: "Select PDF or DOCX",
+      icon: Upload,
+    },
+    {
+      no: "02",
+      title: "Extract Resume",
+      desc: "AI reads your resume",
+      icon: FileText,
+    },
+    {
+      no: "03",
+      title: "ATS Analysis",
+      desc: "Keyword & ATS Scan",
+      icon: ScanSearch,
+    },
+    {
+      no: "04",
+      title: "Generate Report",
+      desc: "Complete AI Report",
+      icon: Wand2,
+    },
   ];
 
   const openFilePicker = () => fileInputRef.current?.click();
@@ -182,10 +285,16 @@ export default function Analyzer() {
     e.preventDefault();
     setError("");
 
-    if (!user.isLoggedIn) return setError("Please log in to analyze your resume.");
-    if (!selectedRole.trim()) return setError("Please select a role from the list.");
+    // The button will now click, and these errors will properly show to the user!
+    if (!user.isLoggedIn)
+      return setError("Please log in to analyze your resume.");
+    if (!selectedRole.trim())
+      return setError("Please select a role from the list.");
     if (!file) return setError("Please upload resume.");
-    if (!navigator.onLine) return setError("Network issue detected. Please check your internet connection.");
+    if (!navigator.onLine)
+      return setError(
+        "Network issue detected. Please check your internet connection.",
+      );
 
     try {
       setLoading(true);
@@ -196,33 +305,58 @@ export default function Analyzer() {
 
       const res = await api.post("/api/resume/analyze", formData);
 
-      // Issue 2 & 3: Sync Limits strictly from Backend and update LocalStorage
-      const savedPlan = JSON.parse(localStorage.getItem("user_plan_data") || "{}");
-      if (res.data?.remainingLimit !== undefined) {
-        savedPlan.remainingLimit = res.data.remainingLimit;
-        savedPlan.dailyLimit = res.data.dailyLimit;
-        savedPlan.todayUsed = res.data.dailyLimit - res.data.remainingLimit;
-        localStorage.setItem("user_plan_data", JSON.stringify(savedPlan));
+      // Sync Limits strictly from Backend and update LocalStorage
+      const plan = res.data.planData;
 
-        setRemainingLimit(res.data.remainingLimit);
-        setActivePlan((prev) => ({ ...prev, limit: res.data.dailyLimit }));
+      setRemainingLimit(plan.remainingLimit);
 
-        if (res.data.remainingLimit <= 0) {
-          setIsLimitReached(true);
-          Swal.fire({
-            icon: "warning",
-            title: "Daily Limit Reached",
-            html: `<b>You have used all today's analyses.</b><br><br>Upgrade your plan or come back tomorrow.`,
-            confirmButtonText: "View Plans",
-            confirmButtonColor: "#2563eb",
-            allowOutsideClick: false,
-          }).then(() => navigate("/pricing"));
-          setLoading(false);
-          return;
-        }
+      setTimeLeft({
+        days: plan.daysLeft,
+        hours: plan.hoursLeft,
+        minutes: plan.minutesLeft,
+        seconds: plan.secondsLeft,
+      });
+
+      setActivePlan({
+        name: plan.planName,
+        limit: plan.dailyLimit,
+        expiryDateStr: new Date(plan.expiryDate).toLocaleDateString("en-GB"),
+      });
+
+      setIsPlanExpired(false);
+
+      setIsLimitReached(
+        plan.remainingLimit !== "Unlimited" && plan.remainingLimit <= 0,
+      );
+      if (plan.remainingLimit !== "Unlimited" && plan.remainingLimit <= 0) {
+        setIsLimitReached(true);
       }
+      // if (res.data?.remainingLimit !== undefined) {
+      //   savedPlan.remainingLimit = res.data.remainingLimit;
+      //   savedPlan.dailyLimit = res.data.dailyLimit;
+      //   savedPlan.todayUsed = res.data.dailyLimit - res.data.remainingLimit;
+      //   localStorage.setItem("user_plan_data", JSON.stringify(savedPlan));
 
-      const reportId = res.data?.data?.reportId || res.data?.report?._id || res.data?.reportId;
+      //   setRemainingLimit(res.data.remainingLimit);
+      //   setActivePlan((prev) => ({ ...prev, limit: res.data.dailyLimit }));
+
+      //   if (res.data.remainingLimit <= 0) {
+      //     setIsLimitReached(true);
+      //     Swal.fire({
+      //       icon: "warning",
+      //       title: "Daily Limit Reached",
+      //       html: `<b>You have used all today's analyses.</b><br><br>Upgrade your plan or come back tomorrow.`,
+      //       confirmButtonText: "View Plans",
+      //       confirmButtonColor: "#2563eb",
+      //       allowOutsideClick: false,
+      //     }).then(() => navigate("/pricing"));
+      //     setLoading(false);
+      //     return;
+      //   }
+      // }
+
+      const reportId =
+        res.data?.data?.reportId || res.data?.report?._id || res.data?.reportId;
       if (!reportId) {
         setError("Report ID not returned.");
         setLoading(false);
@@ -243,9 +377,21 @@ export default function Analyzer() {
       });
 
       setTimeout(() => navigate(`/report/${reportId}`), 1200);
-
     } catch (err) {
-      if (err.response?.status === 403 || err.response?.data?.limitReached) {
+      if (err.response?.data?.planExpired) {
+        setIsPlanExpired(true);
+        Swal.fire({
+          icon: "warning",
+          title: "Plan Expired",
+          html: `<b>Please upgrade your plan to continue using our services.</b><br><br>Upgrade your plan for more analyses.`,
+          confirmButtonText: "View Plans",
+          confirmButtonColor: "#2563eb",
+          allowOutsideClick: false,
+        }).then(() => navigate("/pricing"));
+      } else if (
+        err.response?.status === 403 ||
+        err.response?.data?.limitReached
+      ) {
         setIsLimitReached(true);
         Swal.fire({
           icon: "warning",
@@ -264,13 +410,13 @@ export default function Analyzer() {
     }
   };
 
-  // Issue 9: Single boolean for button state
-  const canAnalyze = !loading && !isLimitReached && !isPlanExpired && remainingLimit > 0 && user.isLoggedIn;
+  // FIX: We only disable the button if it's currently loading.
+  // Let `handleSubmit` catch the other errors (missing file, not logged in) so user knows what's wrong.
+  const canAnalyze = !loading;
 
   return (
     <div className="analyze-page">
       <style>{`
-        /* Issue 5: Completed Missing CSS Classes */
         .analyze-page { width: 100%; display: grid; gap: 24px; }
         .analyze-hero { padding: 30px; border-radius: 28px; display: flex; justify-content: space-between; gap: 20px; align-items: center; flex-wrap: wrap; }
         .analyze-hero h1 { margin: 10px 0 8px; font-size: clamp(30px, 4vw, 52px); line-height: 1.05; font-weight: 900; letter-spacing: -0.04em; color: #0f172a; }
@@ -293,7 +439,6 @@ export default function Analyzer() {
         .search-option:hover { background: #eef2ff; color: #0284c7; cursor: pointer; }
         .selected-role-chip { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 14px; font-weight: 700; color: #334155; border-radius: 16px; }
         
-        /* Issue 7: Responsive Plan Banner Grid */
         .plan-status-banner { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; margin-bottom: 24px; }
         .plan-card { display: flex; flex-direction: column; gap: 4px; }
         .plan-label { font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase; }
@@ -310,7 +455,6 @@ export default function Analyzer() {
         .upload-title strong { font-size: 20px; color: #0f172a; display: block; }
         .upload-title span { color: #64748b; font-size: 14px; font-weight: 600; }
         
-        /* Fixed Missing UI Elements */
         .resume-card { padding: 20px; background: white; border-radius: 16px; border: 1px solid #e2e8f0; width: 100%; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
         .resume-icon { color: #3b82f6; margin-bottom: 8px; }
         .resume-card h3 { margin: 0 0 4px; font-size: 16px; color: #0f172a; }
@@ -345,38 +489,73 @@ export default function Analyzer() {
             <Bot size={14} /> AI Resume Analysis
           </span>
           <h1>Upload resume and generate a smart report</h1>
-          <p>Search and select a role, upload a resume, and get a detailed ATS + AI analysis.</p>
+          <p>
+            Search and select a role, upload a resume, and get a detailed ATS +
+            AI analysis.
+          </p>
         </div>
       </section>
 
       <div className="analyze-grid">
         <section className="analyze-card glass">
+          {/* Lock Overlay only shows if limit is reached or expired */}
           {(isLimitReached || remainingLimit === 0 || isPlanExpired) && (
             <div className="limit-overlay">
               <div className="limit-icon">🔒</div>
               {isPlanExpired ? (
                 <>
-                  <h2 style={{ margin: "0 0 10px 0", color: "#0f172a" }}>Plan Expired</h2>
-                  <p style={{ color: "#475569", lineHeight: "1.6", maxWidth: "80%" }}>
-                    Your {activePlan.name || "current"} plan validity has ended. Please renew to continue.
+                  <h2 style={{ margin: "0 0 10px 0", color: "#0f172a" }}>
+                    Plan Expired
+                  </h2>
+                  <p
+                    style={{
+                      color: "#475569",
+                      lineHeight: "1.6",
+                      maxWidth: "80%",
+                    }}
+                  >
+                    Your {activePlan.name || "current"} plan validity has ended.
+                    Please renew to continue.
                   </p>
                 </>
               ) : activePlan.name === "Free Trial" ? (
                 <>
-                  <h2 style={{ margin: "0 0 10px 0", color: "#0f172a" }}>Daily Limit Reached</h2>
-                  <p style={{ color: "#475569", lineHeight: "1.6", maxWidth: "80%" }}>
-                    You reached your limit of <strong>{activePlan.limit} resumes/day</strong> on the Free Trial.
+                  <h2 style={{ margin: "0 0 10px 0", color: "#0f172a" }}>
+                    Daily Limit Reached
+                  </h2>
+                  <p
+                    style={{
+                      color: "#475569",
+                      lineHeight: "1.6",
+                      maxWidth: "80%",
+                    }}
+                  >
+                    You reached your limit of{" "}
+                    <strong>{activePlan.limit} resumes/day</strong> on the Free
+                    Trial.
                   </p>
                 </>
               ) : (
                 <>
-                  <h2 style={{ margin: "0 0 10px 0", color: "#0f172a" }}>Limit Reached</h2>
-                  <p style={{ color: "#475569", lineHeight: "1.6", maxWidth: "80%" }}>
-                    You have used all available analyses. Upgrade your plan to unlock more!
+                  <h2 style={{ margin: "0 0 10px 0", color: "#0f172a" }}>
+                    Limit Reached
+                  </h2>
+                  <p
+                    style={{
+                      color: "#475569",
+                      lineHeight: "1.6",
+                      maxWidth: "80%",
+                    }}
+                  >
+                    You have used all available analyses. Upgrade your plan to
+                    unlock more!
                   </p>
                 </>
               )}
-              <button className="upgrade-btn" onClick={() => navigate("/pricing")}>
+              <button
+                className="upgrade-btn"
+                onClick={() => navigate("/pricing")}
+              >
                 🚀 View Pricing Plans
               </button>
             </div>
@@ -391,15 +570,26 @@ export default function Analyzer() {
               </div>
               <div className="plan-card">
                 <span className="plan-label">Today's Usage</span>
-                <h3>{activePlan.limit - remainingLimit}/{activePlan.limit}</h3>
+                <h3>
+                  {remainingLimit === "Unlimited"
+                    ? "Unlimited"
+                    : `${activePlan.limit - remainingLimit}/${activePlan.limit}`}
+                </h3>
               </div>
               <div className="plan-card">
                 <span className="plan-label">Remaining</span>
-                <h3>{remainingLimit}</h3>
+                <h3>
+                  {remainingLimit === "Unlimited"
+                    ? "∞ Unlimited"
+                    : remainingLimit}
+                </h3>
               </div>
               <div className="plan-card">
                 <span className="plan-label">Days Left</span>
-                <h3>{daysLeft} Days</h3>
+                <h3>
+                  {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m{" "}
+                  {timeLeft.seconds}s
+                </h3>
               </div>
             </div>
           )}
@@ -420,11 +610,14 @@ export default function Analyzer() {
                     setError("");
                   }}
                   onFocus={() => setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                  onBlur={() =>
+                    setTimeout(() => setShowSuggestions(false), 150)
+                  }
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       const exactMatch = ROLE_OPTIONS.find(
-                        (role) => role.toLowerCase() === roleQuery.trim().toLowerCase()
+                        (role) =>
+                          role.toLowerCase() === roleQuery.trim().toLowerCase(),
                       );
                       if (exactMatch) handleSelectRole(exactMatch);
                     }
@@ -463,24 +656,47 @@ export default function Analyzer() {
               >
                 {!file && !loading && (
                   <div className="upload-idle">
-                    <div className="upload-plus-icon"><PlusIcon /></div>
+                    <div className="upload-plus-icon">
+                      <PlusIcon />
+                    </div>
                     <div className="upload-title">
                       <strong>Upload Resume</strong>
                       <span>PDF or DOCX supported</span>
                     </div>
                   </div>
                 )}
-                {/* Issue 4: Cleaned up Duplicate AI Cards */}
                 {file && !loading && (
                   <div className="upload-flow">
-                    <div className="resume-card">
-                      <div className="resume-icon"><FileText size={34} /></div>
-                      <h3>{file.name}</h3>
-                      <p>Resume Uploaded Successfully</p>
+                    <div className="scan-card">
+                      <div className="scan-header">
+                        <FileSearch size={18} />
+                        Resume Ready
+                      </div>
+
+                      <div className="resume-lines">
+                        <div className="resume-line"></div>
+                        <div className="resume-line"></div>
+                        <div className="resume-line"></div>
+                        <div className="resume-line"></div>
+                        <div className="resume-line"></div>
+                      </div>
+
+                      <div className="scanner"></div>
                     </div>
-                    <div className="ai-card">
-                      <h3>AI Engine Ready</h3>
-                      <p>Click analyze to begin the process.</p>
+
+                    <div className="ai-thinking">
+                      <Sparkles size={18} />
+                      AI Scanner Ready...
+                    </div>
+
+                    <div className="resume-card">
+                      <div className="resume-icon">
+                        <FileText size={34} />
+                      </div>
+
+                      <h3>{file.name}</h3>
+
+                      <p>Resume Uploaded Successfully</p>
                     </div>
                   </div>
                 )}
@@ -496,7 +712,7 @@ export default function Analyzer() {
 
             {error && <div className="error-box">{error}</div>}
 
-            {remainingLimit === 1 && canAnalyze && (
+            {remainingLimit === 1 && !isLimitReached && !isPlanExpired && (
               <div className="warning-box">
                 ⚠️ This is your <strong>last analysis</strong> available today!
               </div>
@@ -505,38 +721,64 @@ export default function Analyzer() {
             <button
               className="primary-btn full-btn"
               style={{
-                width: "100%", padding: "1.2rem", border: "none", borderRadius: "12px",
-                backgroundColor: "#0f172a", color: "white", fontWeight: "700",
-                fontSize: "1.2rem", cursor: canAnalyze ? "pointer" : "not-allowed",
+                width: "100%",
+                padding: "1.2rem",
+                border: "none",
+                borderRadius: "12px",
+                backgroundColor: "#0f172a",
+                color: "white",
+                fontWeight: "700",
+                fontSize: "1.2rem",
+                cursor: canAnalyze ? "pointer" : "not-allowed",
               }}
               disabled={!canAnalyze}
             >
               {loading ? (
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                  <Loader2 size={20} className="spin" /> Processing... {progressValue}%
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <Loader2 size={20} className="spin" /> Processing...{" "}
+                  {progressValue}%
                 </span>
               ) : (
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                  }}
+                >
                   Analyze Resume <ArrowRight size={18} />
                 </span>
               )}
             </button>
-            {/* Issue 6: Removed duplicate loading UI beneath button */}
           </form>
         </section>
 
         <aside className="analyze-side glass">
           <h2>AI Analysis Pipeline</h2>
           <p className="analyze-subtext">
-            Your resume passes through our intelligent AI engine before generating the final report.
+            Your resume passes through our intelligent AI engine before
+            generating the final report.
           </p>
 
           <div className="analysis-timeline">
             {analysisSteps.map((step, index) => {
               const Icon = step.icon;
               return (
-                <div className={`timeline-item ${loading && progressStep >= index ? "active" : ""}`} key={step.no}>
-                  <div className="timeline-circle"><Icon size={20} /></div>
+                <div
+                  className={`timeline-item ${loading && progressStep >= index ? "active" : ""}`}
+                  key={step.no}
+                >
+                  <div className="timeline-circle">
+                    <Icon size={20} />
+                  </div>
                   <div className="timeline-content">
                     <h3>{step.title}</h3>
                     <p>{step.desc}</p>

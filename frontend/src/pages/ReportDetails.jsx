@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api";
+import CountUp from "react-countup";
 
 function StatCard({ label, value, delay = 0 }) {
   return (
@@ -42,6 +43,7 @@ export default function ReportDetails() {
 
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [animatedScore, setAnimatedScore] = useState(0);
   const [error, setError] = useState("");
 
   const fetchReport = async () => {
@@ -94,6 +96,28 @@ export default function ReportDetails() {
     }
     return [];
   }, [report]);
+  useEffect(() => {
+    if (!report) return;
+
+    let current = 0;
+
+    const target = Number(score) || 0;
+
+    const increment = Math.max(1, Math.ceil(target / 50));
+
+    const timer = setInterval(() => {
+      current += increment;
+
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+      }
+
+      setAnimatedScore(current);
+    }, 20);
+
+    return () => clearInterval(timer);
+  }, [report, score]);
 
   return (
     <>
@@ -389,7 +413,9 @@ export default function ReportDetails() {
               <h2>Report Details</h2>
               <p>{error}</p>
               <Link to="/history">
-                <button className="primary-btn" style={{ marginTop: "1rem" }}>Back to Reports</button>
+                <button className="primary-btn" style={{ marginTop: "1rem" }}>
+                  Back to Reports
+                </button>
               </Link>
             </div>
           </div>
@@ -412,7 +438,7 @@ export default function ReportDetails() {
                   style={{ "--p": Math.min(score, 100) }}
                 >
                   <div className="rd-score-inner">
-                    <strong>{score}</strong>
+                    <strong>{animatedScore}</strong>
                     <span>ATS</span>
                   </div>
                 </div>
@@ -420,20 +446,23 @@ export default function ReportDetails() {
             </div>
 
             <div className="rd-stats">
-              <StatCard label="Level" value={levelText} delay={50} />
+              <StatCard label="ATS Score" value={`${score}/100`} delay={50} />
+
               <StatCard
-                label="Skills Found"
-                value={report?.strengths?.length || 0}
+                label="Professional Level"
+                value={levelText}
                 delay={100}
               />
+
+              <StatCard
+                label="Matching Roles"
+                value={report?.jobMatchRoles?.length || 0}
+                delay={150}
+              />
+
               <StatCard
                 label="Missing Skills"
                 value={report?.missingSkills?.length || 0}
-                delay={150}
-              />
-              <StatCard
-                label="Questions"
-                value={report?.interviewQuestions?.length || 0}
                 delay={200}
               />
             </div>

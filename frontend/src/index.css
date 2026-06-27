@@ -3451,70 +3451,49 @@ textarea {
 
   animation: pulseOrb 1.5s infinite;
 }
-@keyframes flowMove{
+@keyframes flowMove {
+  0% {
+    opacity: 0.2;
 
-0%{
+    transform: translateX(0);
+  }
 
-opacity:.2;
+  50% {
+    opacity: 1;
 
-transform:translateX(0);
+    transform: translateX(8px);
+  }
 
+  100% {
+    opacity: 0.2;
+
+    transform: translateX(16px);
+  }
 }
 
-50%{
+@keyframes pulseOrb {
+  0% {
+    transform: scale(1);
+  }
 
-opacity:1;
+  50% {
+    transform: scale(1.12);
+  }
 
-transform:translateX(8px);
-
+  100% {
+    transform: scale(1);
+  }
 }
 
-100%{
+@keyframes floatCard {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
 
-opacity:.2;
-
-transform:translateX(16px);
-
-}
-
-}
-
-@keyframes pulseOrb{
-
-0%{
-
-transform:scale(1);
-
-}
-
-50%{
-
-transform:scale(1.12);
-
-}
-
-100%{
-
-transform:scale(1);
-
-}
-
-}
-
-@keyframes floatCard{
-
-0%,100%{
-
-transform:translateY(0);
-
-}
-
-50%{
-
-transform:translateY(-10px);
-
-}
-
+  50% {
+    transform: translateY(-10px);
+  }
 }
 .premium-loader {
   display: grid;
@@ -3726,7 +3705,7 @@ transform:translateY(-10px);
 .user-chip {
   padding: 10px 14px;
 
-  background: #eef2ff;
+  background: #6f7ba2;
 
   border-radius: 999px;
 
@@ -4393,65 +4372,221 @@ transform:translateY(-10px);
     opacity: 0.4;
   }
 }
-.plan-status-banner{
+.plan-status-banner {
+  display: grid;
 
-display:grid;
+  grid-template-columns: repeat(4, 1fr);
 
-grid-template-columns:repeat(4,1fr);
+  gap: 16px;
 
-gap:16px;
-
-margin-bottom:25px;
-
+  margin-bottom: 25px;
 }
 
-.plan-card{
+.plan-card {
+  padding: 18px;
 
-padding:18px;
+  border-radius: 18px;
 
-border-radius:18px;
+  background: white;
 
-background:white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 
-box-shadow:0 10px 30px rgba(0,0,0,.05);
-
-text-align:center;
-
+  text-align: center;
 }
 
-.plan-label{
+.plan-label {
+  font-size: 13px;
 
-font-size:13px;
+  color: #64748b;
 
-color:#64748b;
-
-font-weight:700;
-
+  font-weight: 700;
 }
 
-.plan-card h3{
+.plan-card h3 {
+  margin-top: 8px;
 
-margin-top:8px;
+  font-size: 20px;
 
-font-size:20px;
-
-font-weight:900;
-
+  font-weight: 900;
 }
 
-.status.active{
+.status.active {
+  color: #16a34a;
 
-color:#16a34a;
-
-font-weight:800;
-
+  font-weight: 800;
 }
-.typing{
+.typing {
+  font-weight: 700;
 
-font-weight:700;
+  color: #2563eb;
 
-color:#2563eb;
+  animation: pulse 1s infinite;
+}
+/* =========================================
+   GLOBAL TOP SPACE FIX FOR MOBILE
+   ========================================= */
 
-animation:pulse 1s infinite;
+/* 1. Basic Reset */
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
 
+#root {
+  margin: 0;
+  padding: 0;
+}
+
+/* 2. Force top space adjustment for Mobile Screens */
+@media (max-width: 768px) {
+  /* Aapke main page wrappers se top padding kam karega */
+  .pricing-wrapper,
+  .rd-page,
+  .analyze-page {
+    padding-top: 10px !important; /* Sirf halka sa gap rakha hai */
+  }
+
+  /* Agar Header ya Navbar ki wajah se gap hai, toh usko fix karega */
+  header,
+  nav,
+  .navbar,
+  .App,
+  #root > div:first-child {
+    margin-top: -7px !important;
+  }
+}
+@media (max-width: 768px) {
+  .navbar-links.show {
+    /* 1. Screen ke center me set karne ke liye */
+    position: fixed !important;
+    top: 520% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+
+    /* 2. Card ki width aur height limit (taki screen se bahar na jaye) */
+    width: 90% !important;
+    max-width: 380px !important;
+    height: auto !important;
+    max-height: 85vh !important;
+
+    /* 3. Card ka design aur scroll */
+    background: #ffffff !important;
+    padding: 25px 20px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+    z-index: 1000 !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    overflow-y: auto !important;
+  }
+}
+.scan-card {
+  width: 100%;
+  max-width: 330px;
+  height: 190px;
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #dbeafe;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+}
+
+.scan-header {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #eff6ff;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.resume-lines {
+  padding: 18px;
+}
+
+.resume-line {
+  height: 8px;
+  border-radius: 10px;
+  background: #dbeafe;
+  margin-bottom: 12px;
+}
+
+.resume-line:nth-child(2) {
+  width: 90%;
+}
+
+.resume-line:nth-child(3) {
+  width: 70%;
+}
+
+.resume-line:nth-child(4) {
+  width: 95%;
+}
+
+.resume-line:nth-child(5) {
+  width: 60%;
+}
+
+.scanner {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+
+  box-shadow: 0 0 25px #3b82f6;
+
+  animation: scanMove 2s linear infinite;
+}
+
+@keyframes scanMove {
+  0% {
+    top: 55px;
+  }
+
+  100% {
+    top: 170px;
+  }
+}
+
+.ai-thinking {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-weight: 700;
+  color: #2563eb;
+  animation: pulse 1.3s infinite;
+}
+.rd-score-ring {
+  animation: fillRing 1.5s ease;
+}
+
+@keyframes fillRing {
+  from {
+    --p: 0;
+  }
+}
+.history-page{
+    width: min(1400px, calc(102% - 10px));
+    min-height: 100vh;
+
+    margin: 20px auto;   /* Center + Left Right Space */
+
+    padding: 3rem 1.5rem;
+
+    background: linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%);
+
+    border-radius: 32px;
+
+    overflow: hidden;
+
+    box-shadow: 0 20px 50px rgba(0,0,0,.08);
 }

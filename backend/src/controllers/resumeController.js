@@ -1,5 +1,6 @@
 import path from "path";
 import ResumeReport from "../models/ResumeReport.js";
+import User from "../models/User.js"; // ADDED: User model to check limits
 import { extractResumeText } from "../services/parseResume.js";
 import { analyzeResumeWithAI } from "../services/analyzeResume.js";
 
@@ -16,6 +17,64 @@ function getSafeOriginalName(file) {
 function getSafeRole(role) {
   return String(role || "").trim();
 }
+
+// // ==========================
+// // FIND USER
+// // ==========================
+
+// const user = await User.findById(req.user.uid);
+// const today = new Date().toISOString().split("T")[0];
+
+// // if (!user) {
+// //   return res.status(404).json({
+// //     success: false,
+// //     message: "User not found",
+// //   });
+// // }
+
+// // ==========================
+// // PLAN EXPIRY CHECK
+// // ==========================
+
+// if (user.planExpiryDate && new Date() > new Date(user.planExpiryDate)) {
+//   return res.status(403).json({
+//     success: false,
+//     planExpired: true,
+//     message: "Your plan has expired.",
+//   });
+// }
+
+// // ==========================
+// // DAILY RESET
+// // ==========================
+
+// const today = new Date().toISOString().split("T")[0];
+
+// if (user.lastResetDate !== today) {
+//   user.todayUsed = 0;
+
+//   user.lastResetDate = today;
+
+//   await user.save();
+// }
+
+// // ==========================
+// // LIMIT CHECK
+// // ==========================
+
+// if (user.dailyLimit !== -1 && user.todayUsed >= user.dailyLimit) {
+//   return res.status(403).json({
+//     success: false,
+
+//     limitReached: true,
+
+//     message: "Daily limit reached.",
+
+//     remainingLimit: 0,
+
+//     dailyLimit: user.dailyLimit,
+//   });
+// }
 
 export const analyzeResume = async (req, res) => {
   try {
@@ -41,6 +100,71 @@ export const analyzeResume = async (req, res) => {
         message: "Please select a role before analyzing the resume",
       });
     }
+    // // ==========================
+    // // UPDATE LIMIT
+    // // ==========================
+
+    // if (user.dailyLimit !== -1) {
+    //   user.todayUsed++;
+
+    //   await user.save();
+    // }
+
+    // const remaining =
+    //   user.dailyLimit === -1 ? "Unlimited" : user.dailyLimit - user.todayUsed;
+
+    // ==========================================
+    // BACKEND LIMIT & VALIDITY CHECK START
+    // ==========================================
+    const user = await User.findOne({
+      $or: [{ _id: req.user.uid }, { googleId: req.user.uid }],
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // if (!userRecord) {
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: "User not found in database",
+    //   });
+    // }
+
+    // 1. Check Plan Expiry
+    if (
+      user.planExpiryDate &&
+      Date.now() > new Date(user.planExpiryDate).getTime()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Your plan has expired. Please renew.",
+        planExpired: true,
+      });
+    }
+
+    // 2. Daily Usage Reset Logic (Midnight Reset)
+    const today = new Date().toISOString().split("T")[0];
+
+    if (user.lastResetDate !== today) {
+      user.todayUsed = 0;
+      user.lastResetDate = today;
+    }
+
+    // 3. Limit Check
+    if (user.dailyLimit !== -1 && user.todayUsed >= user.dailyLimit) {
+      return res.status(403).json({
+        success: false,
+        message: "Daily limit reached for your current plan.",
+        limitReached: true,
+      });
+    }
+    // ==========================================
+    // BACKEND LIMIT CHECK END
+    // ==========================================
 
     const originalName = getSafeOriginalName(req.file);
 
@@ -77,13 +201,52 @@ export const analyzeResume = async (req, res) => {
       rawTextLength: rawText.length,
       rawTextPreview: rawText.slice(0, 500),
     });
+    // ==========================
+    // UPDATE USER LIMIT
+    // ==========================
+
+    if (user.dailyLimit !== -1) {
+      user.todayUsed += 1;
+    }
+
+    await user.save();
+
+    const remaining =
+      user.dailyLimit === -1
+        ? "Unlimited"
+        : Math.max(0, user.dailyLimit - user.todayUsed);
+
+    const daysLeft = Math.max(
+      0,
+      Math.ceil(
+        (new Date(user.planExpiryDate) - new Date()) / (1000 * 60 * 60 * 24),
+      ),
+    );
 
     return res.status(201).json({
       success: true,
+
       message: "Resume analyzed successfully",
+
+      planData: {
+        planName: user.plan,
+
+        dailyLimit: user.dailyLimit === -1 ? "Unlimited" : user.dailyLimit,
+
+        todayUsed: user.todayUsed,
+
+        remainingLimit: remaining,
+
+        daysLeft,
+
+        expiryDate: user.planExpiryDate,
+      },
+
       data: {
         reportId: report._id,
+
         report,
+
         analysis,
       },
     });

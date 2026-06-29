@@ -57,33 +57,70 @@ export default function Login() {
 
   // Optimized Google Script Loading
   useEffect(() => {
-    const handleGoogleResponse = async (response) => {
-      try {
-        setError("");
-        setSuccess("");
-        setGoogleLoading(true);
+    // 1. Add this at the top level of your component (before useEffect)
+    // This ensures the callback is stable and won't cause initialization errors
+    const handleGoogleResponse = useCallback(
+      (response) => {
+        // Use a simple async IIFE to handle the API call
+        (async () => {
+          try {
+            setError("");
+            setSuccess("");
+            setGoogleLoading(true);
 
-        const res = await api.post("/api/auth/google", {
-          credential: response.credential,
-        });
+            const res = await api.post("/api/auth/google", {
+              credential: response.credential,
+            });
 
-        login(res.data.token, res.data.user);
+            login(res.data.token, res.data.user);
+            navigate("/", { replace: true });
+          } catch (err) {
+            console.error(err);
+            setError(err.response?.data?.message || "Google login failed");
+          } finally {
+            setGoogleLoading(false);
+          }
+        })();
+      },
+      [login, navigate],
+    );
 
-        setGoogleLoading(false);
+    // 2. Updated useEffect to initialize safely
+    useEffect(() => {
+      const loadGoogleScript = () => {
+        if (window.google) {
+          if (!initialized.current) {
+            window.google.accounts.id.initialize({
+              client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim(),
+              ux_mode: "popup",
+              callback: handleGoogleResponse,
+            });
+            initialized.current = true;
+          }
 
-        navigate("/", { replace: true });
-      } catch (err) {
-        console.log(err);
-        console.log(err.response);
+          if (googleBtn.current) {
+            window.google.accounts.id.renderButton(googleBtn.current, {
+              theme: "outline",
+              size: "large",
+              shape: "pill",
+              text: "continue_with",
+            });
+            setGoogleReady(true);
+          }
+        }
+      };
 
-        setError(
-          err.response?.data?.message || err.message || "Google login failed",
-        );
-
-        setGoogleLoading(false);
+      if (!window.google) {
+        const script = document.createElement("script");
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        script.onload = loadGoogleScript;
+        document.body.appendChild(script);
+      } else {
+        loadGoogleScript();
       }
-    };
-
+    }, [handleGoogleResponse]);
     const renderGoogleButton = () => {
       if (!window.google || !googleBtn.current) return;
       const buttonWidth = googleBtn.current?.clientWidth || 320;

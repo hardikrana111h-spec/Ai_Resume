@@ -57,15 +57,19 @@ export default function ReportDetails() {
         res = await api.get(`/api/resume/report/${id}`);
       }
 
-      const data = res.data?.data || res.data?.report || res.data;
+      let reportData = null;
 
-      if (!data) {
-        setError("Report not found");
-        setReport(null);
-        return;
+      if (res.data?.data?.report) {
+        reportData = res.data.data.report;
+      } else if (res.data?.report) {
+        reportData = res.data.report;
+      } else if (res.data?.data) {
+        reportData = res.data.data;
+      } else {
+        reportData = res.data;
       }
 
-      setReport(data);
+      setReport(reportData);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load report");
       setReport(null);

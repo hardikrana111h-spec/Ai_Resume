@@ -114,13 +114,17 @@ export default function Analyzer() {
   useEffect(() => {
     const loadPlan = async () => {
       try {
+        // IMPROVEMENT: Safely parse session and ensure isLoggedIn is correctly set
         const session = localStorage.getItem("resume_user");
         if (session) {
-          setUser(JSON.parse(session));
+          const parsedSession = JSON.parse(session);
+          setUser({
+            ...parsedSession,
+            isLoggedIn: !!parsedSession.email || parsedSession.isLoggedIn, 
+          });
         }
 
         const res = await api.get("/api/user/plan-status");
-
         const plan = res.data.planData;
 
         setRemainingLimit(plan.remainingLimit);
@@ -132,7 +136,7 @@ export default function Analyzer() {
         });
 
         setIsLimitReached(
-          plan.remainingLimit !== "Unlimited" && plan.remainingLimit <= 0,
+          plan.remainingLimit !== "Unlimited" && plan.remainingLimit <= 0
         );
 
         setIsPlanExpired(plan.daysLeft <= 0);
@@ -143,7 +147,7 @@ export default function Analyzer() {
           expiryDateStr: new Date(plan.expiryDate).toLocaleDateString("en-GB"),
         });
       } catch (err) {
-        console.error(err);
+        console.error("Error loading plan status:", err);
       }
     };
 
@@ -163,17 +167,14 @@ export default function Analyzer() {
           seconds--;
         } else {
           seconds = 59;
-
           if (minutes > 0) {
             minutes--;
           } else {
             minutes = 59;
-
             if (hours > 0) {
               hours--;
             } else {
               hours = 23;
-
               if (days > 0) {
                 days--;
               }
@@ -181,12 +182,7 @@ export default function Analyzer() {
           }
         }
 
-        const nextTime = {
-          days,
-          hours,
-          minutes,
-          seconds,
-        };
+        const nextTime = { days, hours, minutes, seconds };
 
         if (
           nextTime.days === 0 &&
@@ -212,7 +208,7 @@ export default function Analyzer() {
 
   useEffect(() => {
     const exactMatch = ROLE_OPTIONS.find(
-      (role) => role.toLowerCase() === roleQuery.trim().toLowerCase(),
+      (role) => role.toLowerCase() === roleQuery.trim().toLowerCase()
     );
     if (exactMatch) setSelectedRole(exactMatch);
   }, [roleQuery]);
@@ -242,59 +238,50 @@ export default function Analyzer() {
     setSelectedRole(role);
     setRoleQuery(role);
     setShowSuggestions(false);
-    setError("");
+    setError(""); // Clear error on interaction
   };
 
   const handleFileChange = (e) => {
     const chosen = e.target.files?.[0] || null;
     setFile(chosen);
     setUploadComplete(Boolean(chosen));
-    setError("");
+    setError(""); // Clear error on interaction
+  };
+
+  const openFilePicker = () => fileInputRef.current?.click();
+
+  // IMPROVEMENT: Added keyboard support for the custom file upload box
+  const handleFileUploadKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openFilePicker();
+    }
   };
 
   const analysisSteps = [
-    {
-      no: "01",
-      title: "Upload Resume",
-      desc: "Select PDF or DOCX",
-      icon: Upload,
-    },
-    {
-      no: "02",
-      title: "Extract Resume",
-      desc: "AI reads your resume",
-      icon: FileText,
-    },
-    {
-      no: "03",
-      title: "ATS Analysis",
-      desc: "Keyword & ATS Scan",
-      icon: ScanSearch,
-    },
-    {
-      no: "04",
-      title: "Generate Report",
-      desc: "Complete AI Report",
-      icon: Wand2,
-    },
+    { no: "01", title: "Upload Resume", desc: "Select PDF or DOCX", icon: Upload },
+    { no: "02", title: "Extract Resume", desc: "AI reads your resume", icon: FileText },
+    { no: "03", title: "ATS Analysis", desc: "Keyword & ATS Scan", icon: ScanSearch },
+    { no: "04", title: "Generate Report", desc: "Complete AI Report", icon: Wand2 },
   ];
-
-  const openFilePicker = () => fileInputRef.current?.click();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // The button will now click, and these errors will properly show to the user!
-    if (!user.isLoggedIn)
+    // IMPROVEMENT: More robust authentication check
+    if (!user.isLoggedIn && !user.email) {
       return setError("Please log in to analyze your resume.");
-    if (!selectedRole.trim())
-      return setError("Please select a role from the list.");
-    if (!file) return setError("Please upload resume.");
-    if (!navigator.onLine)
-      return setError(
-        "Network issue detected. Please check your internet connection.",
-      );
+    }
+    if (!selectedRole.trim()) {
+      return setError("Please select a target role from the list.");
+    }
+    if (!file) {
+      return setError("Please upload your resume document.");
+    }
+    if (!navigator.onLine) {
+      return setError("Network issue detected. Please check your internet connection.");
+    }
 
     try {
       setLoading(true);
@@ -304,12 +291,9 @@ export default function Analyzer() {
       formData.append("userEmail", user.email);
 
       const res = await api.post("/api/resume/analyze", formData);
-
-      // Sync Limits strictly from Backend and update LocalStorage
       const plan = res.data.planData;
 
       setRemainingLimit(plan.remainingLimit);
-
       setTimeLeft({
         days: plan.daysLeft,
         hours: plan.hoursLeft,
@@ -324,41 +308,15 @@ export default function Analyzer() {
       });
 
       setIsPlanExpired(false);
-
       setIsLimitReached(
-        plan.remainingLimit !== "Unlimited" && plan.remainingLimit <= 0,
+        plan.remainingLimit !== "Unlimited" && plan.remainingLimit <= 0
       );
-      if (plan.remainingLimit !== "Unlimited" && plan.remainingLimit <= 0) {
-        setIsLimitReached(true);
-      }
-      // if (res.data?.remainingLimit !== undefined) {
-      //   savedPlan.remainingLimit = res.data.remainingLimit;
-      //   savedPlan.dailyLimit = res.data.dailyLimit;
-      //   savedPlan.todayUsed = res.data.dailyLimit - res.data.remainingLimit;
-      //   localStorage.setItem("user_plan_data", JSON.stringify(savedPlan));
-
-      //   setRemainingLimit(res.data.remainingLimit);
-      //   setActivePlan((prev) => ({ ...prev, limit: res.data.dailyLimit }));
-
-      //   if (res.data.remainingLimit <= 0) {
-      //     setIsLimitReached(true);
-      //     Swal.fire({
-      //       icon: "warning",
-      //       title: "Daily Limit Reached",
-      //       html: `<b>You have used all today's analyses.</b><br><br>Upgrade your plan or come back tomorrow.`,
-      //       confirmButtonText: "View Plans",
-      //       confirmButtonColor: "#2563eb",
-      //       allowOutsideClick: false,
-      //     }).then(() => navigate("/pricing"));
-      //     setLoading(false);
-      //     return;
-      //   }
-      // }
 
       const reportId =
         res.data?.data?.reportId || res.data?.report?._id || res.data?.reportId;
+        
       if (!reportId) {
-        setError("Report ID not returned.");
+        setError("Report ID not returned from the server.");
         setLoading(false);
         return;
       }
@@ -402,7 +360,7 @@ export default function Analyzer() {
           allowOutsideClick: false,
         }).then(() => navigate("/pricing"));
       } else {
-        setError(err.response?.data?.message || "Analysis failed");
+        setError(err.response?.data?.message || "Analysis failed to complete.");
       }
       setLoading(false);
       setProgressValue(0);
@@ -410,8 +368,6 @@ export default function Analyzer() {
     }
   };
 
-  // FIX: We only disable the button if it's currently loading.
-  // Let `handleSubmit` catch the other errors (missing file, not logged in) so user knows what's wrong.
   const canAnalyze = !loading;
 
   return (
@@ -449,12 +405,24 @@ export default function Analyzer() {
         @media (max-width: 600px) { .plan-status-banner { grid-template-columns: 1fr; } }
         
         .upload-scene { position: relative; overflow: hidden; min-height: 280px; border-radius: 24px; border: 2px dashed #94a3b8; background: #f8fafc; display: grid; place-items: center; text-align: center; padding: 24px; cursor: pointer; transition: all 0.2s ease; }
+        .upload-scene:focus-visible { outline: 3px solid #3b82f6; outline-offset: 2px; }
         .upload-scene:hover { border-color: #3b82f6; background: #eff6ff; }
         .upload-idle, .upload-flow { position: relative; z-index: 2; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; }
         .upload-plus-icon { width: 78px; height: 78px; border-radius: 22px; display: grid; place-items: center; background: #3b82f6; color: #fff; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3); }
         .upload-title strong { font-size: 20px; color: #0f172a; display: block; }
         .upload-title span { color: #64748b; font-size: 14px; font-weight: 600; }
         
+        /* NEW: Loading Scanning Animation CSS */
+        .upload-scanning { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; width: 100%; }
+        .doc-scanner-icon { position: relative; width: 75px; height: 95px; background-color: #fff; border: 3px solid #cbd5e1; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; padding: 14px 10px; gap: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .doc-line { height: 6px; background-color: #e2e8f0; border-radius: 4px; }
+        .doc-line.short { width: 45%; }
+        .doc-line.long { width: 90%; }
+        .doc-line.medium { width: 70%; }
+        .laser-beam { position: absolute; top: 0; left: 0; width: 100%; height: 3px; background-color: #8b5cf6; box-shadow: 0 0 15px 4px rgba(139, 92, 246, 0.6); animation: scan 2s infinite ease-in-out; }
+        @keyframes scan { 0% { top: -5%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 105%; opacity: 0; } }
+        .scanning-text { color: #475569; font-weight: 700; font-size: 16px; animation: pulse-text 1.5s infinite; display: flex; align-items: center; gap: 8px; }
+
         .resume-card { padding: 20px; background: white; border-radius: 16px; border: 1px solid #e2e8f0; width: 100%; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
         .resume-icon { color: #3b82f6; margin-bottom: 8px; }
         .resume-card h3 { margin: 0 0 4px; font-size: 16px; color: #0f172a; }
@@ -498,7 +466,6 @@ export default function Analyzer() {
 
       <div className="analyze-grid">
         <section className="analyze-card glass">
-          {/* Lock Overlay only shows if limit is reached or expired */}
           {(isLimitReached || remainingLimit === 0 || isPlanExpired) && (
             <div className="limit-overlay">
               <div className="limit-icon">🔒</div>
@@ -607,7 +574,7 @@ export default function Analyzer() {
                     setRoleQuery(e.target.value);
                     setSelectedRole("");
                     setShowSuggestions(true);
-                    setError("");
+                    setError(""); // Clear error automatically
                   }}
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() =>
@@ -617,7 +584,7 @@ export default function Analyzer() {
                     if (e.key === "Enter") {
                       const exactMatch = ROLE_OPTIONS.find(
                         (role) =>
-                          role.toLowerCase() === roleQuery.trim().toLowerCase(),
+                          role.toLowerCase() === roleQuery.trim().toLowerCase()
                       );
                       if (exactMatch) handleSelectRole(exactMatch);
                     }
@@ -653,7 +620,9 @@ export default function Analyzer() {
                 role="button"
                 tabIndex={0}
                 onClick={openFilePicker}
+                onKeyDown={handleFileUploadKeyDown}
               >
+                {/* 1. Normal State (No file, Not loading) */}
                 {!file && !loading && (
                   <div className="upload-idle">
                     <div className="upload-plus-icon">
@@ -665,6 +634,8 @@ export default function Analyzer() {
                     </div>
                   </div>
                 )}
+                
+                {/* 2. File Selected State (File exists, Not loading) */}
                 {file && !loading && (
                   <div className="upload-flow">
                     <div className="scan-card">
@@ -697,6 +668,24 @@ export default function Analyzer() {
                       <h3>{file.name}</h3>
 
                       <p>Resume Uploaded Successfully</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. NEW: Loading State (AI is scanning) */}
+                {loading && (
+                  <div className="upload-scanning">
+                    <div className="doc-scanner-icon">
+                      <div className="doc-line short"></div>
+                      <div className="doc-line long"></div>
+                      <div className="doc-line medium"></div>
+                      <div className="doc-line long"></div>
+                      <div className="doc-line short"></div>
+                      <div className="laser-beam"></div>
+                    </div>
+                    <div className="scanning-text">
+                      <Sparkles size={18} />
+                      AI is analyzing your resume...
                     </div>
                   </div>
                 )}

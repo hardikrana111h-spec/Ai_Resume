@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../api"; // Adjust the path as needed
+import { useAuth } from "../context/AuthContext";
 
 const plans = [
   {
@@ -56,18 +57,49 @@ export default function Pricing() {
     seconds: 0,
   });
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Get user from local storage
-  const savedSession = JSON.parse(localStorage.getItem("resume_user") || "{}");
-  const userEmail = savedSession?.email || "";
+  const userEmail = user?.email || "";
 
   useEffect(() => {
+    if (!user) return;
     loadPlan();
 
-    const interval = setInterval(loadPlan, 5000);
+    return () => {};
+  }, [user]);
 
-    return () => clearInterval(interval);
-  }, []);
+  const loadPlan = async () => {
+    try {
+      if (!user) return;
+
+      const { data } = await api.get("/api/user/plan-status");
+
+      const plan = data.planData;
+
+      if (!plan) return;
+
+      setPlanData(plan);
+      setCurrentPlan(plan.planName);
+      setHasUsedFreeTrial(plan.hasUsedFreeTrial || false);
+
+      if (plan.expiryDate) {
+        const expiry = new Date(plan.expiryDate).getTime();
+        const now = Date.now();
+
+        let diff = Math.max(0, expiry - now);
+
+        setTimeLeft({
+          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((diff % (1000 * 60)) / 1000),
+        });
+      }
+    } catch (err) {
+      console.error("Load Plan Error:", err.response?.data || err);
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -113,97 +145,6 @@ export default function Pricing() {
   }, []);
 
   const handlePayment = async (plan) => {
-    // ==========================================
-    // 1. LIVE TIMER POPUP LOGIC (Check Active Plan)
-    // ==========================================
-    if (
-      planData &&
-      planData.planName === plan.name &&
-      planData.expiryDate &&
-      new Date(planData.expiryDate) > new Date()
-    ) {
-      const expiry = new Date(planData.expiryDate).getTime();
-
-      let interval;
-
-      Swal.fire({
-        icon: "info",
-        title: "Plan Already Active",
-        html: `
-      <h3>${planData.planName}</h3>
-
-      <p>Your current plan is still active.</p>
-
-      <h2
-        id="live-countdown"
-        style="
-          color:#2563eb;
-          font-weight:bold;
-          margin-top:15px;
-        "
-      ></h2>
-
-      <small>
-        You can purchase a new plan after expiry.
-      </small>
-    `,
-
-        confirmButtonText: "OK",
-
-        didOpen: () => {
-          const el = document.getElementById("live-countdown");
-
-          const updateTimer = () => {
-            const diff = expiry - Date.now();
-
-            if (diff <= 0) {
-              clearInterval(interval);
-
-              Swal.close();
-
-              return;
-            }
-
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-            const hours = Math.floor(
-              (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-            );
-
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            el.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-          };
-
-          updateTimer();
-
-          interval = setInterval(updateTimer, 1000);
-        },
-
-        willClose: () => {
-          clearInterval(interval);
-        },
-      });
-
-      return;
-    }
-
-    // ==========================================
-    // 2. FREE TRIAL LOGIC
-    // ==========================================
-    if (plan.price === "₹0") {
-      return Swal.fire({
-        icon: "info",
-        title: "Free Trial",
-        text: "Free Trial will be activated from backend.",
-      });
-    }
-
-    // ==========================================
-    // 3. RAZORPAY PAYMENT INTEGRATION
-    // ==========================================
     if (!userEmail) {
       return Swal.fire(
         "Login Required",
@@ -212,6 +153,84 @@ export default function Pricing() {
       );
     }
 
+    // ==========================================
+    // 1. GLOBAL ACTIVE PLAN CHECK (Blocks ALL purchases if any plan is active)
+    // ==========================================
+    const isAnyPlanActive = planData?.expiryDate && new Date(planData.expiryDate) > new Date();
+    
+    if (isAnyPlanActive) {
+      const expiry = new Date(planData.expiryDate).getTime();
+      let interval;
+
+      Swal.fire({
+        icon: "info",
+        title: "Plan Already Active",
+        html: `
+        <h3>Active Plan: ${planData.planName}</h3>
+        <p>You cannot purchase or switch plans while your current plan is active.</p>
+        <h2
+          id="live-countdown"
+          style="color:#2563eb; font-weight:bold; margin-top:15px;"
+        ></h2>
+        <small>You can purchase a new plan after expiry.</small>
+      `,
+        confirmButtonText: "OK",
+        didOpen: () => {
+          const el = document.getElementById("live-countdown");
+
+          const updateTimer = () => {
+            const diff = expiry - Date.now();
+            if (diff <= 0) {
+              clearInterval(interval);
+              Swal.close();
+              return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            el.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+          };
+
+          updateTimer();
+          interval = setInterval(updateTimer, 1000);
+        },
+        willClose: () => {
+          clearInterval(interval);
+        },
+      });
+
+      return; // 🚨 STOPS HERE: User has active plan, no Razorpay, no backend call.
+    }
+
+    // ==========================================
+    // 2. FREE TRIAL LOGIC (Bypasses Razorpay completely)
+    // ==========================================
+    if (plan.price === "₹0") {
+      try {
+        // HINT: You need a backend route to handle this without payment!
+        // Uncomment the line below once your backend route is ready:
+        await api.post("/api/payment/activate-trial", { userEmail });
+        
+        await Swal.fire({
+          icon: "success",
+          title: "Trial Activated",
+          text: "Your free trial has been activated successfully!",
+        });
+        
+        await loadPlan(); // Refresh user data
+        navigate("/analyze"); 
+        return; // Stops here, no Razorpay.
+      } catch (error) {
+        return Swal.fire("Error", "Could not activate Free Trial", "error");
+      }
+    }
+
+    // ==========================================
+    // 3. RAZORPAY PAYMENT INTEGRATION (Only runs for Paid plans)
+    // ==========================================
     const numericPrice = parseInt(plan.price.replace("₹", ""));
 
     try {
@@ -219,9 +238,8 @@ export default function Pricing() {
       const orderRes = await api.post("/api/payment/create-order", {
         amount: numericPrice,
         planName: plan.name,
-        userEmail,
       });
-
+      
       const orderData = orderRes.data;
 
       // Backend active plan check error handling (Double safety)
@@ -230,22 +248,18 @@ export default function Pricing() {
           icon: "info",
           title: "Plan Already Active",
           html: `
-    <b>Your current plan is still active.</b><br><br>
-    Please wait until it expires before purchasing another plan.
-  `,
+            <b>Your current plan is still active.</b><br><br>
+            Please wait until it expires before purchasing another plan.
+          `,
         });
       }
 
       if (!orderData.success) {
-        return Swal.fire(
-          "Error",
-          "Failed to create order. Check backend.",
-          "error",
-        );
+        return Swal.fire("Error", "Failed to create order. Check backend.", "error");
       }
 
       const options = {
-        key: "rzp_test_T5Oc4Wb5bs1uqJ", // Apna Razorpay Key id yaha daalein
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: orderData.order.amount,
         currency: orderData.order.currency,
         name: "AI Resume Pro",
@@ -263,17 +277,9 @@ export default function Pricing() {
           const verifyData = verifyRes.data;
 
           if (verifyData.success) {
-            setCurrentPlan(plan.name);
-
             setPlanData(verifyData.planData);
-
-            const latest = await api.get("/api/user/plan-status");
-
-            setPlanData(latest.data.planData);
-
-            setCurrentPlan(latest.data.planData.planName);
-
-            setHasUsedFreeTrial(true);
+            setCurrentPlan(verifyData.planData.planName);
+            await loadPlan();
 
             await Swal.fire(
               "Payment Successful!",
@@ -289,6 +295,10 @@ export default function Pricing() {
         prefill: { email: userEmail },
         theme: { color: "#0f172a" },
       };
+
+      if (!window.Razorpay) {
+        return Swal.fire("Error", "Razorpay SDK not loaded.", "error");
+      }
 
       const razorpay = new window.Razorpay(options);
       razorpay.open();
@@ -327,7 +337,7 @@ export default function Pricing() {
           .plan-button.standard:hover:not(:disabled) { background-color: #1e293b; transform: scale(1.02); }
           .plan-button.highlight { background-color: #3b82f6; color: white; }
           .plan-button.highlight:hover:not(:disabled) { background-color: #2563eb; transform: scale(1.02); }
-          .plan-button.active-btn { background-color: #10b981; color: white; cursor: default; }
+          .plan-button.active-btn { background-color: #10b981; color: white; cursor: pointer; }
           .plan-button:disabled { opacity: 0.6; cursor: not-allowed; }
           @media (max-width: 1024px) { .feature-grid { gap: 1.5rem; } .feature-item { padding: 2rem 1.5rem; } }
           @media (max-width: 768px) { .pricing-wrapper { padding: 1rem; } .content-card { padding: 2rem 1.5rem; } .content-card h1 { font-size: 2rem; } .section-note { font-size: 1rem; } .feature-grid { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; } .feature-item:hover { transform: none; } }
@@ -345,10 +355,7 @@ export default function Pricing() {
 
           <div className="feature-grid">
             {plans.map((plan) => {
-              const isCurrentPlan =
-                planData &&
-                planData.planName === plan.name &&
-                !planData.isPlanExpired;
+              const isCurrentPlan = planData?.planName === plan.name;
               let buttonText = plan.defaultBtnText;
               let buttonClass =
                 plan.name === "Premium"
@@ -357,10 +364,8 @@ export default function Pricing() {
               let isDisabled = false;
 
               if (isCurrentPlan) {
-                buttonText = "Current Active Plan ✓";
+                buttonText = "Active Plan";
                 buttonClass = "plan-button active-btn";
-                // Let user click to see the timer popup, so we DO NOT disable here if we want them to see it.
-                // Or you can leave it disabled and they see the popup on other plans.
               } else if (plan.name === "Free Trial" && hasUsedFreeTrial) {
                 buttonText = "Trial Already Used";
                 isDisabled = true;
@@ -414,9 +419,7 @@ export default function Pricing() {
 
                   <button
                     className={buttonClass}
-                    disabled={
-                      isDisabled || (isCurrentPlan && !planData?.isPlanExpired)
-                    }
+                    disabled={isDisabled}
                     onClick={() => handlePayment(plan)}
                   >
                     {buttonText}

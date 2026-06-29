@@ -1,6 +1,10 @@
 import User from "../models/User.js";
 import Razorpay from "razorpay";
 import crypto from "crypto";
+import dotenv from "dotenv";
+
+// Load env vars explicitly just in case
+dotenv.config();
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -12,7 +16,7 @@ const razorpay = new Razorpay({
 // =========================
 export const createOrder = async (req, res) => {
   try {
-    const { amount , email} = req.body;
+    const { amount, email } = req.body;
 
     if (!amount || amount <= 0) {
       return res.status(400).json({
@@ -33,7 +37,6 @@ export const createOrder = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-
     return res.status(500).json({
       success: false,
       message: "Unable to create order",
@@ -76,15 +79,13 @@ export const verifyPayment = async (req, res) => {
       });
     }
 
-    if(
-        user.planExpiryDate && new Date(user.planExpiryDate) > new Date()
-    ){
-        return res.status(400).json({
-            success: false,
-            activePlanError: true,
-            message: "Current plan is still active. Cannot upgrade now.",
-            expiryDate: user.planExpiryDate,
-        });
+    if (user.planExpiryDate && new Date(user.planExpiryDate) > new Date()) {
+      return res.status(400).json({
+        success: false,
+        activePlanError: true,
+        message: "Current plan is still active. Cannot upgrade now.",
+        expiryDate: user.planExpiryDate,
+      });
     }
 
     let dailyLimit = 3;
@@ -126,32 +127,91 @@ export const verifyPayment = async (req, res) => {
 
     await user.save();
 
-    const daysLeft = Math.max(
-      0,
-      Math.ceil((user.planExpiryDate - new Date()) / (1000 * 60 * 60 * 24)),
-    );
-
     return res.json({
       success: true,
       message: "Plan Activated",
       planData: {
         planName: user.plan,
         dailyLimit: user.dailyLimit,
-        remainingLimit:
-          user.dailyLimit === -1
-            ? "Unlimited"
-            : user.dailyLimit,
-        // todayUsed: user.todayUsed,
+        remainingLimit: user.dailyLimit === -1 ? "Unlimited" : user.dailyLimit,
         expiryDate: user.planExpiryDate,
         paymentId: razorpay_payment_id,
       },
     });
   } catch (err) {
     console.error(err);
-
     return res.status(500).json({
       success: false,
       message: "Payment verification failed",
+    });
+  }
+};
+
+// =========================
+// ACTIVATE FREE TRIAL
+// =========================
+export const activateFreeTrial = async (req, res) => {
+  try {
+    const { userEmail } = req.body;
+
+    const user = await User.findOne({ email: userEmail });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // 1. Check if user already has an active plan
+    if (user.planExpiryDate && new Date(user.planExpiryDate) > new Date()) {
+      return res.status(400).json({
+        success: false,
+        activePlanError: true,
+        message: "Current plan is still active. Cannot activate trial.",
+      });
+    }
+
+    // 2. Check if they have already used a free trial in the past
+    if (user.hasUsedFreeTrial) {
+      return res.status(403).json({
+        success: false,
+        message: "You have already used your one-time free trial.",
+      });
+    }
+
+    // 3. Set Trial Logic (3 Days Validity, 3 Daily Limit)
+    const startDate = new Date();
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 3);
+
+    user.plan = "Free Trial";
+    user.dailyLimit = 3;
+    user.todayUsed = 0;
+    user.lastResetDate = new Date().toISOString().split("T")[0];
+    user.planStartDate = startDate;
+    user.planExpiryDate = expiryDate;
+    
+    // Safety flag so they can't abuse the free trial forever
+    user.hasUsedFreeTrial = true; 
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Free Trial Activated Successfully",
+      planData: {
+        planName: user.plan,
+        dailyLimit: user.dailyLimit,
+        remainingLimit: user.dailyLimit,
+        expiryDate: user.planExpiryDate,
+      },
+    });
+  } catch (err) {
+    console.error("Activate Trial Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to activate free trial",
     });
   }
 };

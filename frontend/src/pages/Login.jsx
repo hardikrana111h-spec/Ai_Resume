@@ -17,7 +17,7 @@ export default function Login() {
   const navigate = useNavigate();
   const googleBtn = useRef(null);
   const initialized = useRef(false);
-  const { setUser } = useAuth();
+  const { login } = useAuth();
 
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -67,24 +67,11 @@ export default function Login() {
           credential: response.credential,
         });
 
-        // Clear previous session
-        localStorage.removeItem("resume_token");
-        localStorage.removeItem("resume_user");
-
-        // Save current user
-        localStorage.setItem("resume_token", res.data.token);
-        localStorage.setItem("resume_user", JSON.stringify(res.data.user));
-
-        setUser(res.data.user);
+        login(res.data.token, res.data.user);
 
         setGoogleLoading(false);
 
         navigate("/", { replace: true });
-
-        // localStorage.setItem("resume_token", res.data.token);
-        // localStorage.setItem("resume_user", JSON.stringify(res.data.user));
-
-        // setUser(res.data.user);
       } catch (err) {
         setError(err.response?.data?.message || "Google login failed");
         setGoogleLoading(false);
@@ -191,14 +178,7 @@ export default function Login() {
       });
 
       // Clear previous session
-      localStorage.removeItem("resume_token");
-      localStorage.removeItem("resume_user");
-
-      // Save current user
-      localStorage.setItem("resume_token", res.data.token);
-      localStorage.setItem("resume_user", JSON.stringify(res.data.user));
-
-      setUser(res.data.user);
+      login(res.data.token, res.data.user);
 
       navigate("/", { replace: true });
     } catch (err) {

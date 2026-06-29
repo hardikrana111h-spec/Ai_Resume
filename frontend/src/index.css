@@ -3724,7 +3724,7 @@ textarea {
 
   font-weight: 600;
 
-  background: linear-gradient(135deg, #f9f9fc, #cbcbdb);
+  background: linear-gradient(135deg, #4d4dc6, #4b27db);
 
   color: rgb(12, 54, 240);
 }
@@ -4873,4 +4873,69 @@ padding-bottom:95px;
 
 }
 
+}
+/* Document Scanning Animation */
+.processing-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 250px; /* Adjust based on your dotted box height */
+  width: 100%;
+}
+
+.document-icon {
+  position: relative;
+  width: 70px;
+  height: 90px;
+  background-color: #f8fafc;
+  border: 3px solid #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 6px;
+}
+
+/* Creating fake text lines inside the document */
+.doc-line {
+  height: 6px;
+  background-color: #e2e8f0;
+  border-radius: 4px;
+}
+.doc-line.short { width: 50%; }
+.doc-line.long { width: 90%; }
+.doc-line.medium { width: 75%; }
+
+/* The Laser Scanner Line */
+.scanner-laser {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #8b5cf6; /* Matches your purple button */
+  box-shadow: 0 0 10px 2px rgba(139, 92, 246, 0.5);
+  animation: scanning 2s infinite ease-in-out;
+}
+
+@keyframes scanning {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.processing-text {
+  margin-top: 20px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #64748b;
+  animation: pulse-text 1.5s infinite;
+}
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }

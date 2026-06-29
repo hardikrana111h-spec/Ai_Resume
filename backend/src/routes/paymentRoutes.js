@@ -8,5 +8,6 @@ const router = express.Router();
 
 router.post("/create-order", createOrder);
 router.post("/verify", verifyPayment);
+router.post("/activate-trial", activateFreeTrial);
 
 export default router;

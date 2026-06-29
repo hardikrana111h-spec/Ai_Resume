@@ -2,6 +2,7 @@ import express from "express";
 import {
   createOrder,
   verifyPayment,
+  activateFreeTrial,
 } from "../controllers/paymentController.js";
 
 const router = express.Router();

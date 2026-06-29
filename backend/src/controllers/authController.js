@@ -3,7 +3,11 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+if (!process.env.GOOGLE_CLIENT_ID) {
+  throw new Error("GOOGLE_CLIENT_ID is missing");
+}
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID.trim());
 
 const createToken = (user) => {
   return jwt.sign(
@@ -16,7 +20,7 @@ const createToken = (user) => {
       role: user.role || "user", // ADD THIS
     },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "7d" },
   );
 };
 
@@ -126,7 +130,14 @@ export const login = async (req, res) => {
 
 export const googleLogin = async (req, res) => {
   try {
-    const { credential } = req.body;
+    const credential = req.body?.credential;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: "Google credential missing",
+      });
+    }
 
     if (!credential) {
       return res.status(400).json({
@@ -142,9 +153,17 @@ export const googleLogin = async (req, res) => {
 
     const payload = ticket.getPayload();
 
+    if (!payload) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid Google token",
+      });
+    }
+
     const email = (payload.email || "").toLowerCase();
     const googleId = payload.sub;
-    const name = payload.name || payload.given_name || email.split("@")[0] || "";
+    const name =
+      payload.name || payload.given_name || email.split("@")[0] || "";
     const picture = payload.picture || "";
 
     if (!email) {
@@ -184,10 +203,13 @@ export const googleLogin = async (req, res) => {
       user: sanitizeUser(user),
     });
   } catch (error) {
-    console.error("GOOGLE LOGIN ERROR:", error);
-    return res.status(401).json({
+    console.error("GOOGLE LOGIN ERROR");
+
+    console.error(error);
+
+    return res.status(500).json({
       success: false,
-      message: "Google authentication failed",
+      message: error.message,
     });
   }
 };

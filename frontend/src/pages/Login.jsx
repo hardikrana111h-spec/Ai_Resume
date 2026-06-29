@@ -73,7 +73,13 @@ export default function Login() {
 
         navigate("/", { replace: true });
       } catch (err) {
-        setError(err.response?.data?.message || "Google login failed");
+        console.log(err);
+        console.log(err.response);
+
+        setError(
+          err.response?.data?.message || err.message || "Google login failed",
+        );
+
         setGoogleLoading(false);
       }
     };
@@ -98,7 +104,7 @@ export default function Login() {
       initialized.current = true;
 
       window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim(),
         ux_mode: "popup",
         callback: handleGoogleResponse,
       });

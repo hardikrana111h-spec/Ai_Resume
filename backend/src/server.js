@@ -6,9 +6,11 @@ import connectDB from "./config/db.js";
 async function start() {
   try {
     console.log(
-      "OPENAI KEY:",
-      process.env.OPENAI_API_KEY ? "FOUND" : "MISSING"
+      "GOOGLE CLIENT:",
+      process.env.GOOGLE_CLIENT_ID ? "FOUND" : "MISSING",
     );
+
+    console.log("JWT:", process.env.JWT_SECRET ? "FOUND" : "MISSING");
 
     // Import app AFTER environment variables are loaded
     const { default: app } = await import("./app.js");

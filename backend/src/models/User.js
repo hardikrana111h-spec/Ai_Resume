@@ -53,8 +53,13 @@ const userSchema = new mongoose.Schema(
 
     plan: {
       type: String,
-      enum: ["Free Trial", "Basic", "Pro", "Premium"],
+      enum: ["Free Trial", "Basic", "Pro", "Premium", "Expired"],
       default: "Free Trial",
+    },
+
+    hasUsedFreeTrial: {
+      type: Boolean,
+      default: false,
     },
 
     paymentId: {
@@ -115,7 +120,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // ==========================

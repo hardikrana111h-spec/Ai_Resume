@@ -69,6 +69,16 @@ export default function Pricing() {
     return () => {};
   }, [user]);
 
+  useEffect(() => {
+  if (!user) return;
+
+  const interval = setInterval(() => {
+    loadPlan();
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, [user]);
+
   const loadPlan = async () => {
     try {
       if (!user) return;
@@ -143,7 +153,7 @@ export default function Pricing() {
 
     return () => clearInterval(timer);
   }, []);
-
+    
   const handlePayment = async (plan) => {
     if (!userEmail) {
       return Swal.fire(

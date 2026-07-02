@@ -37,24 +37,18 @@ export const getPlanStatus = async (req, res) => {
     if (user.planExpiryDate) {
       isPlanExpired = new Date(user.planExpiryDate) <= new Date();
 
-      if (isPlanExpired) {
-        // Automatically reset expired users to Free Trial
-        user.plan = "Free Trial";
-        user.dailyLimit = 3;
-        user.todayUsed = 0;
-        user.planStartDate = new Date();
-
-        const expiry = new Date();
-        expiry.setDate(expiry.getDate() + 3);
-        user.planExpiryDate = expiry;
+      if (isPlanExpired && user.plan !== "Expired") {
+        user.plan = "Expired";
+        user.todayUsed = user.dailyLimit;
 
         await user.save();
       }
     }
 
     // Remaining Limit
-    const remainingLimit =
-      user.dailyLimit === -1
+    const remainingLimit = isPlanExpired
+      ? 0
+      : user.dailyLimit === -1
         ? "Unlimited"
         : Math.max(0, user.dailyLimit - user.todayUsed);
 
@@ -64,7 +58,7 @@ export const getPlanStatus = async (req, res) => {
 
     let totalSeconds = Math.max(
       0,
-      Math.floor((expiry.getTime() - now.getTime()) / 1000)
+      Math.floor((expiry.getTime() - now.getTime()) / 1000),
     );
 
     const daysLeft = Math.floor(totalSeconds / 86400);
@@ -82,10 +76,7 @@ export const getPlanStatus = async (req, res) => {
       planData: {
         planName: user.plan,
 
-        dailyLimit:
-          user.dailyLimit === -1
-            ? "Unlimited"
-            : user.dailyLimit,
+        dailyLimit: user.dailyLimit === -1 ? "Unlimited" : user.dailyLimit,
 
         todayUsed: user.todayUsed,
 

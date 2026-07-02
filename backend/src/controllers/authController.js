@@ -17,7 +17,7 @@ const createToken = (user) => {
       name: user.name || "",
       picture: user.picture || "",
       authProvider: user.authProvider || "local",
-      role: user.role || "user", // ADD THIS
+      role: user.role || "user", 
     },
     process.env.JWT_SECRET,
     { expiresIn: "7d" },
@@ -62,6 +62,8 @@ export const signup = async (req, res) => {
       password: hashedPassword,
       authProvider: "local",
       name: normalizedEmail.split("@")[0],
+      // OVERRIDE MONGOOSE DEFAULTS: Explicitly set no plan so they have to choose
+      plan: "Free Trial",
     });
 
     const token = createToken(user);
@@ -71,6 +73,7 @@ export const signup = async (req, res) => {
       message: "Account created successfully",
       token,
       user: sanitizeUser(user),
+      isNewUser: true // <--- TELLS FRONTEND TO REDIRECT TO PRICING
     });
   } catch (error) {
     console.error("SIGNUP ERROR:", error);
@@ -118,6 +121,7 @@ export const login = async (req, res) => {
       message: "Login successful",
       token,
       user: sanitizeUser(user),
+      isNewUser: false // <--- NORMAL LOGIN, NO REDIRECT
     });
   } catch (error) {
     console.error("LOGIN ERROR:", error);
@@ -136,13 +140,6 @@ export const googleLogin = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Google credential missing",
-      });
-    }
-
-    if (!credential) {
-      return res.status(400).json({
-        success: false,
-        message: "Google credential is required",
       });
     }
 
@@ -173,11 +170,14 @@ export const googleLogin = async (req, res) => {
       });
     }
 
+    let isNewUser = false; // <--- TRACK IF BRAND NEW GOOGLE USER
+
     let user = await User.findOne({
       $or: [{ googleId }, { email }],
     });
 
     if (!user) {
+      isNewUser = true; // <--- MARK AS NEW
       user = await User.create({
         email,
         name,
@@ -185,6 +185,8 @@ export const googleLogin = async (req, res) => {
         googleId,
         authProvider: "google",
         password: "",
+        // OVERRIDE MONGOOSE DEFAULTS
+        plan: "Free Trial",
       });
     } else {
       user.name = user.name || name;
@@ -201,10 +203,10 @@ export const googleLogin = async (req, res) => {
       message: "Google login successful",
       token,
       user: sanitizeUser(user),
+      isNewUser // <--- SEND TO FRONTEND
     });
   } catch (error) {
     console.error("GOOGLE LOGIN ERROR");
-
     console.error(error);
 
     return res.status(500).json({

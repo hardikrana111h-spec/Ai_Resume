@@ -111,48 +111,58 @@ export default function Analyzer() {
   const [progressStep, setProgressStep] = useState(0);
   const [uploadComplete, setUploadComplete] = useState(false);
 
-  useEffect(() => {
-    const loadPlan = async () => {
+  const loadPlan = async () => {
+  try {
+    const token = localStorage.getItem("resume_token");
+
+    if (token) {
       try {
-        // IMPROVEMENT: Safely parse session and ensure isLoggedIn is correctly set
-        const session = localStorage.getItem("resume_user");
-        if (session) {
-          const parsedSession = JSON.parse(session);
-          setUser({
-            ...parsedSession,
-            isLoggedIn: !!parsedSession.email || parsedSession.isLoggedIn, 
-          });
-        }
+        const payload = JSON.parse(atob(token.split(".")[1]));
 
-        const res = await api.get("/api/user/plan-status");
-        const plan = res.data.planData;
-
-        setRemainingLimit(plan.remainingLimit);
-        setTimeLeft({
-          days: plan.daysLeft,
-          hours: plan.hoursLeft,
-          minutes: plan.minutesLeft,
-          seconds: plan.secondsLeft,
+        setUser({
+          isLoggedIn: true,
+          email: payload.email || "",
         });
-
-        setIsLimitReached(
-          plan.remainingLimit !== "Unlimited" && plan.remainingLimit <= 0
-        );
-
-        setIsPlanExpired(plan.daysLeft <= 0);
-
-        setActivePlan({
-          name: plan.planName,
-          limit: plan.dailyLimit,
-          expiryDateStr: new Date(plan.expiryDate).toLocaleDateString("en-GB"),
-        });
-      } catch (err) {
-        console.error("Error loading plan status:", err);
+      } catch (e) {
+        console.error("Token decode error:", e);
       }
-    };
+    }
 
-    loadPlan();
-  }, []);
+    const res = await api.get("/api/user/plan-status");
+
+    const plan = res.data.planData || res.data;
+
+    setRemainingLimit(plan.remainingLimit || plan.credits);
+
+    setTimeLeft({
+      days: plan.daysLeft || 0,
+      hours: plan.hoursLeft || 0,
+      minutes: plan.minutesLeft || 0,
+      seconds: plan.secondsLeft || 0,
+    });
+
+    setIsLimitReached(
+      plan.remainingLimit !== "Unlimited" &&
+      (plan.remainingLimit <= 0 || plan.credits <= 0)
+    );
+
+    setIsPlanExpired(plan.isPlanExpired);
+
+    setActivePlan({
+      name: plan.planName || plan.plan || "Free Trial",
+      limit: plan.dailyLimit || 3,
+      expiryDateStr: plan.expiryDate
+        ? new Date(plan.expiryDate).toLocaleDateString("en-GB")
+        : "N/A",
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+  useEffect(() => {
+  loadPlan();
+}, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -190,7 +200,7 @@ export default function Analyzer() {
           nextTime.minutes === 0 &&
           nextTime.seconds === 0
         ) {
-          setIsPlanExpired(true);
+          loadPlan();
         }
 
         return nextTime;
@@ -208,7 +218,7 @@ export default function Analyzer() {
 
   useEffect(() => {
     const exactMatch = ROLE_OPTIONS.find(
-      (role) => role.toLowerCase() === roleQuery.trim().toLowerCase()
+      (role) => role.toLowerCase() === roleQuery.trim().toLowerCase(),
     );
     if (exactMatch) setSelectedRole(exactMatch);
   }, [roleQuery]);
@@ -238,19 +248,18 @@ export default function Analyzer() {
     setSelectedRole(role);
     setRoleQuery(role);
     setShowSuggestions(false);
-    setError(""); // Clear error on interaction
+    setError("");
   };
 
   const handleFileChange = (e) => {
     const chosen = e.target.files?.[0] || null;
     setFile(chosen);
     setUploadComplete(Boolean(chosen));
-    setError(""); // Clear error on interaction
+    setError("");
   };
 
   const openFilePicker = () => fileInputRef.current?.click();
 
-  // IMPROVEMENT: Added keyboard support for the custom file upload box
   const handleFileUploadKeyDown = (e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -259,18 +268,37 @@ export default function Analyzer() {
   };
 
   const analysisSteps = [
-    { no: "01", title: "Upload Resume", desc: "Select PDF or DOCX", icon: Upload },
-    { no: "02", title: "Extract Resume", desc: "AI reads your resume", icon: FileText },
-    { no: "03", title: "ATS Analysis", desc: "Keyword & ATS Scan", icon: ScanSearch },
-    { no: "04", title: "Generate Report", desc: "Complete AI Report", icon: Wand2 },
+    {
+      no: "01",
+      title: "Upload Resume",
+      desc: "Select PDF or DOCX",
+      icon: Upload,
+    },
+    {
+      no: "02",
+      title: "Extract Resume",
+      desc: "AI reads your resume",
+      icon: FileText,
+    },
+    {
+      no: "03",
+      title: "ATS Analysis",
+      desc: "Keyword & ATS Scan",
+      icon: ScanSearch,
+    },
+    {
+      no: "04",
+      title: "Generate Report",
+      desc: "Complete AI Report",
+      icon: Wand2,
+    },
   ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // IMPROVEMENT: More robust authentication check
-    if (!user.isLoggedIn && !user.email) {
+    if (!user.isLoggedIn) {
       return setError("Please log in to analyze your resume.");
     }
     if (!selectedRole.trim()) {
@@ -280,7 +308,9 @@ export default function Analyzer() {
       return setError("Please upload your resume document.");
     }
     if (!navigator.onLine) {
-      return setError("Network issue detected. Please check your internet connection.");
+      return setError(
+        "Network issue detected. Please check your internet connection.",
+      );
     }
 
     try {
@@ -291,30 +321,33 @@ export default function Analyzer() {
       formData.append("userEmail", user.email);
 
       const res = await api.post("/api/resume/analyze", formData);
-      const plan = res.data.planData;
+      const plan = res.data.planData || res.data;
 
-      setRemainingLimit(plan.remainingLimit);
-      setTimeLeft({
-        days: plan.daysLeft,
-        hours: plan.hoursLeft,
-        minutes: plan.minutesLeft,
-        seconds: plan.secondsLeft,
-      });
+      if (plan) {
+        setRemainingLimit(plan.remainingLimit || plan.credits);
+        setTimeLeft({
+          days: plan.daysLeft || 0,
+          hours: plan.hoursLeft || 0,
+          minutes: plan.minutesLeft || 0,
+          seconds: plan.secondsLeft || 0,
+        });
 
-      setActivePlan({
-        name: plan.planName,
-        limit: plan.dailyLimit,
-        expiryDateStr: new Date(plan.expiryDate).toLocaleDateString("en-GB"),
-      });
-
-      setIsPlanExpired(false);
-      setIsLimitReached(
-        plan.remainingLimit !== "Unlimited" && plan.remainingLimit <= 0
-      );
+        setActivePlan({
+          name: plan.planName || plan.plan || "Free",
+          limit: plan.dailyLimit || 10,
+          expiryDateStr: plan.expiryDate
+            ? new Date(plan.expiryDate).toLocaleDateString("en-GB")
+            : "N/A",
+        });
+        setIsLimitReached(
+          plan.remainingLimit !== "Unlimited" &&
+            (plan.remainingLimit <= 0 || plan.credits <= 0),
+        );
+      }
 
       const reportId =
         res.data?.data?.reportId || res.data?.report?._id || res.data?.reportId;
-        
+
       if (!reportId) {
         setError("Report ID not returned from the server.");
         setLoading(false);
@@ -574,7 +607,7 @@ export default function Analyzer() {
                     setRoleQuery(e.target.value);
                     setSelectedRole("");
                     setShowSuggestions(true);
-                    setError(""); // Clear error automatically
+                    setError("");
                   }}
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() =>
@@ -584,7 +617,7 @@ export default function Analyzer() {
                     if (e.key === "Enter") {
                       const exactMatch = ROLE_OPTIONS.find(
                         (role) =>
-                          role.toLowerCase() === roleQuery.trim().toLowerCase()
+                          role.toLowerCase() === roleQuery.trim().toLowerCase(),
                       );
                       if (exactMatch) handleSelectRole(exactMatch);
                     }
@@ -622,7 +655,6 @@ export default function Analyzer() {
                 onClick={openFilePicker}
                 onKeyDown={handleFileUploadKeyDown}
               >
-                {/* 1. Normal State (No file, Not loading) */}
                 {!file && !loading && (
                   <div className="upload-idle">
                     <div className="upload-plus-icon">
@@ -634,8 +666,7 @@ export default function Analyzer() {
                     </div>
                   </div>
                 )}
-                
-                {/* 2. File Selected State (File exists, Not loading) */}
+
                 {file && !loading && (
                   <div className="upload-flow">
                     <div className="scan-card">
@@ -672,7 +703,6 @@ export default function Analyzer() {
                   </div>
                 )}
 
-                {/* 3. NEW: Loading State (AI is scanning) */}
                 {loading && (
                   <div className="upload-scanning">
                     <div className="doc-scanner-icon">

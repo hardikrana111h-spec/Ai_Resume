@@ -124,26 +124,6 @@ export const analyzeResume = async (req, res) => {
       });
     }
 
-    // Safety: if somehow user record is missing, create one.
-    if (!user) {
-      user = await User.create({
-        name: req.user.name || req.user.email.split("@")[0],
-        email: req.user.email.toLowerCase(),
-
-        plan: "Free Trial",
-
-        dailyLimit: 3,
-
-        todayUsed: 0,
-
-        lastResetDate: new Date().toISOString().split("T")[0],
-
-        planStartDate: new Date(),
-
-        planExpiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-      });
-    }
-
     if (!user) {
       return res.status(404).json({
         success: false,

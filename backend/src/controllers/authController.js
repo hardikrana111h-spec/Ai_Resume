@@ -7,13 +7,8 @@ if (!process.env.GOOGLE_CLIENT_ID) {
   throw new Error("GOOGLE_CLIENT_ID is missing");
 }
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID.trim();
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID.trim());
 
-const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
-
-// ==============================
-// CREATE JWT
-// ==============================
 const createToken = (user) => {
   return jwt.sign(
     {
@@ -22,18 +17,13 @@ const createToken = (user) => {
       name: user.name || "",
       picture: user.picture || "",
       authProvider: user.authProvider || "local",
-      role: user.role || "user",
+      role: user.role || "user", 
     },
     process.env.JWT_SECRET,
-    {
-      expiresIn: "7d",
-    }
+    { expiresIn: "7d" },
   );
 };
 
-// ==============================
-// SANITIZE USER
-// ==============================
 const sanitizeUser = (user) => ({
   id: user._id,
   uid: user._id.toString(),
@@ -44,9 +34,6 @@ const sanitizeUser = (user) => ({
   role: user.role || "user",
 });
 
-// ==============================
-// SIGNUP
-// ==============================
 export const signup = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -59,10 +46,7 @@ export const signup = async (req, res) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-
-    const existingUser = await User.findOne({
-      email: normalizedEmail,
-    }).lean();
+    const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       return res.status(400).json({
@@ -78,6 +62,7 @@ export const signup = async (req, res) => {
       password: hashedPassword,
       authProvider: "local",
       name: normalizedEmail.split("@")[0],
+      // OVERRIDE MONGOOSE DEFAULTS: Explicitly set no plan so they have to choose
       plan: "Free Trial",
     });
 
@@ -88,11 +73,10 @@ export const signup = async (req, res) => {
       message: "Account created successfully",
       token,
       user: sanitizeUser(user),
-      isNewUser: true,
+      isNewUser: true // <--- TELLS FRONTEND TO REDIRECT TO PRICING
     });
   } catch (error) {
     console.error("SIGNUP ERROR:", error);
-
     return res.status(500).json({
       success: false,
       message: error.message || "Signup failed",
@@ -100,9 +84,6 @@ export const signup = async (req, res) => {
   }
 };
 
-// ==============================
-// NORMAL LOGIN
-// ==============================
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -115,10 +96,7 @@ export const login = async (req, res) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-
-    const user = await User.findOne({
-      email: normalizedEmail,
-    });
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user || !user.password) {
       return res.status(401).json({
@@ -127,10 +105,7 @@ export const login = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(
-      password,
-      user.password
-    );
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(401).json({
@@ -146,11 +121,10 @@ export const login = async (req, res) => {
       message: "Login successful",
       token,
       user: sanitizeUser(user),
-      isNewUser: false,
+      isNewUser: false // <--- NORMAL LOGIN, NO REDIRECT
     });
   } catch (error) {
     console.error("LOGIN ERROR:", error);
-
     return res.status(500).json({
       success: false,
       message: error.message || "Login failed",
@@ -158,9 +132,6 @@ export const login = async (req, res) => {
   }
 };
 
-// ==============================
-// GOOGLE LOGIN - OPTIMIZED
-// ==============================
 export const googleLogin = async (req, res) => {
   try {
     const credential = req.body?.credential;
@@ -172,10 +143,9 @@ export const googleLogin = async (req, res) => {
       });
     }
 
-    // Verify Google ID token
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
-      audience: GOOGLE_CLIENT_ID,
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
@@ -187,43 +157,27 @@ export const googleLogin = async (req, res) => {
       });
     }
 
-    const email = (payload.email || "")
-      .trim()
-      .toLowerCase();
-
+    const email = (payload.email || "").toLowerCase();
     const googleId = payload.sub;
-
     const name =
-      payload.name ||
-      payload.given_name ||
-      email.split("@")[0] ||
-      "";
-
+      payload.name || payload.given_name || email.split("@")[0] || "";
     const picture = payload.picture || "";
 
-    if (!email || !googleId) {
+    if (!email) {
       return res.status(401).json({
         success: false,
-        message: "Invalid Google account information",
+        message: "Google account email not found",
       });
     }
 
-    // Find existing user
+    let isNewUser = false; // <--- TRACK IF BRAND NEW GOOGLE USER
+
     let user = await User.findOne({
-      $or: [
-        { googleId },
-        { email },
-      ],
+      $or: [{ googleId }, { email }],
     });
 
-    let isNewUser = false;
-
-    // ==============================
-    // NEW GOOGLE USER
-    // ==============================
     if (!user) {
-      isNewUser = true;
-
+      isNewUser = true; // <--- MARK AS NEW
       user = await User.create({
         email,
         name,
@@ -231,67 +185,37 @@ export const googleLogin = async (req, res) => {
         googleId,
         authProvider: "google",
         password: "",
+        // OVERRIDE MONGOOSE DEFAULTS
         plan: "Free Trial",
       });
     } else {
-      // ==============================
-      // EXISTING USER
-      // Only update if something changed
-      // ==============================
-
-      let changed = false;
-
-      if (!user.googleId) {
-        user.googleId = googleId;
-        changed = true;
-      }
-
-      if (!user.name && name) {
-        user.name = name;
-        changed = true;
-      }
-
-      if (picture && user.picture !== picture) {
-        user.picture = picture;
-        changed = true;
-      }
-
-      if (user.authProvider !== "google") {
-        user.authProvider = "google";
-        changed = true;
-      }
-
-      // DB write only when required
-      if (changed) {
-        await user.save();
-      }
+      user.name = user.name || name;
+      user.picture = picture || user.picture;
+      user.googleId = user.googleId || googleId;
+      user.authProvider = "google";
+      await user.save();
     }
 
-    // Create JWT
     const token = createToken(user);
 
-    // Send response immediately
-    return res.status(200).json({
+    return res.json({
       success: true,
       message: "Google login successful",
       token,
       user: sanitizeUser(user),
-      isNewUser,
+      isNewUser // <--- SEND TO FRONTEND
     });
   } catch (error) {
-    console.error("GOOGLE LOGIN ERROR:", error);
+    console.error("GOOGLE LOGIN ERROR");
+    console.error(error);
 
     return res.status(500).json({
       success: false,
-      message:
-        error.message || "Google login failed",
+      message: error.message,
     });
   }
 };
 
-// ==============================
-// LOGOUT
-// ==============================
 export const logout = async (req, res) => {
   return res.json({
     success: true,
@@ -299,9 +223,6 @@ export const logout = async (req, res) => {
   });
 };
 
-// ==============================
-// GET ME
-// ==============================
 export const getMe = async (req, res) => {
   try {
     return res.json({
@@ -310,7 +231,6 @@ export const getMe = async (req, res) => {
     });
   } catch (error) {
     console.error("GET ME ERROR:", error);
-
     return res.status(500).json({
       success: false,
       message: "Failed to get current user",
